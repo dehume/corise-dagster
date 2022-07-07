@@ -1,0 +1,36 @@
+[tool.poetry]
+name = "corise-dagster"
+version = "0.1.0"
+description = "co:rise Dagster."
+authors = ["Dennis Hume <hume.dennis@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.7.5"
+dagster = "0.15.0"
+dagster-cloud = "0.15.0"
+dagster-postgres = "0.15.0"
+dagit = "0.15.0"
+pydantic = "^1.9.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.1.2"
+pytest-cov = "^2.11.1"
+mypy = "^0.910"
+black = "^22.1.0"
+flake8 = "^3.9.0"
+flake8-bugbear = "^21.3.2"
+isort = "^5.9.3"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+ignore_missing_imports = true 
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api" 

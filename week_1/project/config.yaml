@@ -1,0 +1,4 @@
+ops:
+  process_data:
+    config:
+      month: 1
