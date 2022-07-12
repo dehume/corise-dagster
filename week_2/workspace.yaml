@@ -1,0 +1,6 @@
+---
+load_from:
+  - grpc_server:
+      host: dagster-ucr
+      port: 4000
+      location_name: "dagster-ucr"

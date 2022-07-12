@@ -1,0 +1,126 @@
+---
+version: "3.9"
+
+x-build:
+  &default-build
+  context: .
+  dockerfile: Dockerfile
+
+x-app-vars:
+  &default-app-vars
+  DAGSTER_POSTGRES_HOSTNAME: "postgresql"
+  DAGSTER_POSTGRES_DB: "postgres_db"
+  DAGSTER_POSTGRES_USER: "postgres_user"
+  DAGSTER_POSTGRES_PASSWORD: "postgres_password"
+
+services:
+
+  # Dagster Services
+  dagit:
+    build:
+      << : *default-build
+      target: dagit
+    container_name: dagit
+    restart: on-failure
+    environment:
+      << : *default-app-vars
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - workspace
+    profiles:
+      - dagster
+    volumes:
+      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+    networks:
+      - dagster_network
+
+  dagster-daemon:
+    build:
+      << : *default-build
+      target: daemon
+    container_name: dagster-daemon
+    restart: on-failure
+    environment:
+      << : *default-app-vars
+    depends_on:
+      - postgres
+      - workspace
+    profiles:
+      - dagster
+    volumes:
+      - ./dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
+      - ./workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+    networks:
+      - dagster_network
+
+  # Storage
+  postgresql:
+    image: postgres:11
+    container_name: postgresql
+    environment:
+      POSTGRES_DB: postgres_db
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+    volumes:
+      - ./postgres-dagster:/var/lib/postgresql/data
+    networks:
+      - dagster_network
+
+  cache:
+    image: redis:6.2-alpine
+    container_name: cache
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning --requirepass foobar
+
+  # UCR
+  dagster-ucr:
+    build:
+      << : *default-build
+      target: ucr
+    container_name: dagster-ucr
+    restart: always
+    environment:
+      << : *default-app-vars
+      # Keys for localstack
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    depends_on:
+      - localstack
+    volumes:
+      - ./dagster_ucr:/opt/dagster/dagster_home/dagster_ucr
+    profiles:
+      - dagster
+    networks:
+      - dagster_network
+
+  # Localstack
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    ports:
+      - "4566:4566"
+    environment:
+      HOSTNAME: localhost
+      SERVICES: s3
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      DEFAULT_REGION: us-east-1
+    volumes:
+      # Upload our stock csv
+      - ./stock.csv://opt/code/localstack/stock.csv
+      - ./local_stack.sh:/docker-entrypoint-initaws.d/create_localstack_infra.sh
+    networks:
+      - dagster_network
+
+networks:
+  dagster_network:
+    driver: bridge
+    name: dagster_network
+
+volumes:
+  postgresql:
