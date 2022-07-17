@@ -6,7 +6,7 @@ authors = ["Dennis Hume <hume.dennis@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "3.7.5"
+python = "<3.10,>=3.6.0"
 dagster = "0.15.0"
 dagster-cloud = "0.15.0"
 dagster-postgres = "0.15.0"
