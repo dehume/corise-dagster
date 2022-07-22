@@ -1,5 +1,6 @@
-from os import access
-from typing import Dict
+import csv
+from typing import Dict, Iterator
+from unittest.mock import MagicMock
 
 import boto3
 import redis
@@ -7,6 +8,7 @@ import sqlalchemy
 from dagster import Field, Int, String, resource
 
 
+# Clients
 class Postgres:
     def __init__(self, host: str, user: str, password: str, database: str):
         self.host = host
@@ -40,18 +42,22 @@ class S3:
             endpoint_url=self.endpoint_url,
         )
 
-    def get_file(self, key_name: str):
-        return self._client.get_object(Bucket=self.bucket, Key=key_name)
+    def get_data(self, key_name: str) -> Iterator:
+        obj = self.client.get_object(Bucket=self.bucket, Key=key_name)
+        data = obj["Body"].read().decode("utf-8").split("\n")
+        for record in csv.reader(data):
+            yield record
 
 
 class Redis:
     def __init__(self, host: str, port: int):
-        self.client = redis.Redis(host=host, port=port, db=0)
+        self.client = redis.Redis(host=host, port=port)
 
-    def put_data(self, set_name: str, data: Dict):
-        self.client.set(set_name, data)
+    def put_data(self, name: str, value: str):
+        self.client.set(name, value)
 
 
+# Resources
 @resource(
     config_schema={
         "host": Field(String),
@@ -71,11 +77,25 @@ def postgres_resource(context) -> Postgres:
     )
 
 
-@resource()
-def s3_resource(context) -> S3:
+@resource
+def mock_s3_resource(context):
+    stocks = [
+        ["2020/09/01", "10.0", "10", "10.0", "10.0", "10.0"],
+        ["2020/09/02", "10.0", "10", "10.0", "10.0", "10.0"],
+        ["2020/09/03", "10.0", "10", "10.0", "10.0", "10.0"],
+        ["2020/09/04", "10.0", "10", "10.0", "10.0", "10.0"],
+        ["2020/09/05", "10.0", "10", "10.0", "10.0", "10.0"],
+    ]
+    s3_mock = MagicMock()
+    s3_mock.get_data.return_value = stocks
+    return s3_mock
+
+
+@resource
+def s3_resource():
     pass
 
 
 @resource()
-def redis_resource(context) -> Redis:
+def redis_resource():
     pass

@@ -2,36 +2,34 @@ from typing import List
 
 from dagster import In, Nothing, Out, ResourceDefinition, graph, op
 
-from dagster_ucr.resources import redis_resource, s3_resource
-from dagster_ucr.types import Aggregation, Stock
+from dagster_ucr.project.types import Aggregation, Stock
+from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
+
+S3_KEY = "prefix/stock.csv"
 
 
 @op
-def get_s3_data(context):
+def get_s3_data():
     pass
 
 
-@op(
-    config_schema={"month": int},
-    ins={"stocks": In(dagster_type=List[Stock])},
-    out={"aggregation": Out(dagster_type=Aggregation)},
-    description="Process data",
-)
+@op
 def process_data(context, stocks):
-    # Use your op from week 1
-    pass
+    """
+    Use your op from week 1
+    """
 
 
-@op()
-def put_redis_data(context, aggregation: Aggregation) -> Nothing:
+@op
+def put_redis_data():
     pass
 
 
 @graph
 def week_2_pipeline():
-    stock_data = get_s3_data()
-    agg_data = process_data(stock_data)
-    put_redis_data(agg_data)
+    """
+    Use your job from week 1
+    """
 
 
 local = {
@@ -45,12 +43,12 @@ docker = {
                 "bucket": "dagster",
                 "access_key": "test",
                 "secret_key": "test",
-                "endpoint_url": "http://localhost:4566",
+                "endpoint_url": "http://host.docker.internal:4566",
             }
         },
         "redis": {
             "config": {
-                "host": "cache",
+                "host": "redis",
                 "port": 6379,
             }
         },
@@ -59,9 +57,9 @@ docker = {
 }
 
 local_week_2_pipeline = week_2_pipeline.to_job(
-    name="loacl_week_2_pipeline",
+    name="local_week_2_pipeline",
     config=local,
-    resource_defs={"s3": ResourceDefinition.mock_resource(), "redis": ResourceDefinition.mock_resource()},
+    resource_defs={"s3": mock_s3_resource, "redis": ResourceDefinition.mock_resource()},
 )
 
 docker_week_2_pipeline = week_2_pipeline.to_job(
