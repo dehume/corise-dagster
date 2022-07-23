@@ -1,11 +1,9 @@
 from typing import List
 
-from dagster import In, Nothing, Out, ResourceDefinition, graph, op
+from dagster import Nothing, ResourceDefinition, graph, op
 
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
-
-S3_KEY = "prefix/stock.csv"
 
 
 @op
@@ -14,10 +12,9 @@ def get_s3_data():
 
 
 @op
-def process_data(context, stocks):
-    """
-    Use your op from week 1
-    """
+def process_data(stocks):
+    # Use your op from week 1
+    pass
 
 
 @op
@@ -27,13 +24,12 @@ def put_redis_data():
 
 @graph
 def week_2_pipeline():
-    """
-    Use your job from week 1
-    """
+    # Use your job from week 1
+    pass
 
 
 local = {
-    "ops": {"process_data": {"config": {"month": 9}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
 
 docker = {
@@ -53,7 +49,7 @@ docker = {
             }
         },
     },
-    "ops": {"process_data": {"config": {"month": 9}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": "preifx/stock.csv"}}},
 }
 
 local_week_2_pipeline = week_2_pipeline.to_job(

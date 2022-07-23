@@ -1,4 +1,4 @@
 ops:
-  process_data:
+  get_s3_data:
     config:
-      month: 1
+      s3_key: data/stock.csv

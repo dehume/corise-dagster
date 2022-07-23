@@ -77,11 +77,11 @@ services:
       - dagster_network
 
   # UCR
-  dagster-ucr:
+  content:
     build:
       << : *default-build
-      target: ucr
-    container_name: dagster-ucr
+      target: content
+    container_name: content
     restart: always
     environment:
       << : *default-app-vars
@@ -91,7 +91,27 @@ services:
     depends_on:
       - localstack
     volumes:
-      - ./dagster_ucr:/opt/dagster/dagster_home/dagster_ucr
+      - ./content:/opt/dagster/dagster_home/content
+    profiles:
+      - dagster
+    networks:
+      - dagster_network
+
+  project:
+    build:
+      << : *default-build
+      target: project
+    container_name: project
+    restart: always
+    environment:
+      << : *default-app-vars
+      # Keys for localstack
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+    depends_on:
+      - localstack
+    volumes:
+      - ./project:/opt/dagster/dagster_home/project
     profiles:
       - dagster
     networks:
