@@ -1,15 +1,24 @@
 import datetime
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-from dagster import ResourceDefinition, RetryPolicy, build_op_context
+from dagster import (
+    ResourceDefinition,
+    RetryPolicy,
+    RunRequest,
+    SensorEvaluationContext,
+    SkipReason,
+    build_op_context,
+)
 
 from project.resources import mock_s3_resource
+from project.sensors import get_s3_keys
 from project.types import Aggregation, Stock
 from project.week_3 import (
     docker_config,
     docker_week_3_pipeline,
     docker_week_3_schedule,
+    docker_week_3_sensor,
     get_s3_data,
     local_week_3_pipeline,
     local_week_3_schedule,
@@ -37,6 +46,59 @@ def aggregation():
 @pytest.fixture
 def stock_list():
     return ["2020/09/01", "10.0", "10", "10.0", "10.0", "10.0"]
+
+
+@pytest.fixture
+def boto3_empty_return():
+    return [
+        {
+            "Contents": [],
+            "MaxKeys": 1000,
+            "KeyCount": 0,
+        }
+    ]
+
+
+@pytest.fixture
+def resource_config():
+    return {
+        "resources": {
+            "s3": {
+                "config": {
+                    "bucket": "dagster",
+                    "access_key": "test",
+                    "secret_key": "test",
+                    "endpoint_url": "http://host.docker.internal:4566",
+                }
+            },
+            "redis": {
+                "config": {
+                    "host": "redis",
+                    "port": 6379,
+                }
+            },
+        },
+    }
+
+
+@pytest.fixture
+def boto3_return():
+    return [
+        {
+            "Contents": [
+                {
+                    "Key": "key_1",
+                    "LastModified": "2015, 1, 1",
+                },
+                {
+                    "Key": "key_2",
+                    "LastModified": "2015, 1, 2",
+                },
+            ],
+            "MaxKeys": 1000,
+            "KeyCount": 2,
+        }
+    ]
 
 
 def test_stock(stocks):
@@ -72,7 +134,7 @@ def test_put_redis_data(aggregation):
         assert redis_mock.put_data.called
 
 
-def test_week_2_pipeline(stock_list):
+def test_week_3_pipeline():
     week_3_pipeline.execute_in_process(
         run_config={"ops": {"get_s3_data": {"config": {"s3_key": "data/stock.csv"}}}},
         resources={"s3": mock_s3_resource, "redis": ResourceDefinition.mock_resource()},
@@ -93,25 +155,57 @@ def test_docker_week_3_schedule():
     assert docker_week_3_schedule.cron_schedule == "0 * * * *"
 
 
-def test_docker_config():
+@patch("boto3.client")
+def test_get_s3_keys(mock, boto3_return):
+    mock.return_value.list_objects_v2.side_effect = boto3_return
+    result = get_s3_keys(bucket="bucket", prefix="prefix")
+
+    mock.assert_called_with(service_name="s3")
+    mock.return_value.list_objects_v2.assert_called_with(
+        Bucket="bucket",
+        Delimiter="",
+        MaxKeys=1000,
+        Prefix="prefix",
+        StartAfter="",
+    )
+    assert result == ["key_1", "key_2"]
+
+
+@patch("boto3.client")
+def test_docker_week_3_sensor_none(mock, boto3_empty_return):
+    mock.return_value.list_objects_v2.side_effect = boto3_empty_return
+    result = docker_week_3_sensor(SensorEvaluationContext(None, None, None, None, None))
+    assert next(result) == SkipReason(skip_message="No new s3 files found in bucket.")
+
+
+@patch("boto3.client")
+def test_docker_week_3_sensor_keys(mock, resource_config, boto3_return):
+    mock.return_value.list_objects_v2.side_effect = boto3_return
+    result = docker_week_3_sensor(SensorEvaluationContext(None, None, None, None, None))
+    assert next(result) == RunRequest(
+        run_key="key_1",
+        run_config={
+            **resource_config,
+            "ops": {"get_s3_data": {"config": {"s3_key": "key_1"}}},
+        },
+        tags={},
+        job_name=None,
+    )
+    assert next(result) == RunRequest(
+        run_key="key_2",
+        run_config={
+            **resource_config,
+            "ops": {"get_s3_data": {"config": {"s3_key": "key_2"}}},
+        },
+        tags={},
+        job_name=None,
+    )
+
+
+def test_docker_config(resource_config):
     keys = docker_config.get_partition_keys()
     assert keys == [str(n) for n in range(1, 11)]
     assert docker_config.get_run_config_for_partition_key(keys[0]) == {
-        "resources": {
-            "s3": {
-                "config": {
-                    "bucket": "dagster",
-                    "access_key": "test",
-                    "secret_key": "test",
-                    "endpoint_url": "http://host.docker.internal:4566",
-                }
-            },
-            "redis": {
-                "config": {
-                    "host": "redis",
-                    "port": 6379,
-                }
-            },
-        },
+        **resource_config,
         "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_1.csv"}}},
     }
