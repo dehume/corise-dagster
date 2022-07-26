@@ -1,5 +1,4 @@
 from dagster import repository
-
 from project.week_3 import (
     docker_week_3_pipeline,
     docker_week_3_schedule,

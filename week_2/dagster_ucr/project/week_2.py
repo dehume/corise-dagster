@@ -1,7 +1,6 @@
 from typing import List
 
-from dagster import Nothing, ResourceDefinition, graph, op
-
+from dagster import In, Nothing, Out, ResourceDefinition, graph, op
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
@@ -12,7 +11,7 @@ def get_s3_data():
 
 
 @op
-def process_data(stocks):
+def process_data():
     # Use your op from week 1
     pass
 
@@ -24,7 +23,7 @@ def put_redis_data():
 
 @graph
 def week_2_pipeline():
-    # Use your job from week 1
+    # Use your graph from week 1
     pass
 
 

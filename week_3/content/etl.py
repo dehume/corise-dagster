@@ -1,6 +1,7 @@
 from datetime import datetime
 from random import randint
 
+from content.resources import postgres_resource
 from dagster import (
     AssetMaterialization,
     ResourceDefinition,
@@ -12,10 +13,12 @@ from dagster import (
     static_partitioned_config,
 )
 
-from content.resources import postgres_resource
 
-
-@op(config_schema={"table_name": String, "process_date": String}, required_resource_keys={"database"})
+@op(
+    config_schema={"table_name": String, "process_date": String},
+    required_resource_keys={"database"},
+    tags={"kind": "postgres"},
+)
 def create_table(context) -> String:
     table_name = context.op_config["table_name"]
     sql = f"CREATE TABLE IF NOT EXISTS {table_name} (column_1 VARCHAR(100));"
@@ -23,7 +26,10 @@ def create_table(context) -> String:
     return table_name
 
 
-@op(required_resource_keys={"database"})
+@op(
+    required_resource_keys={"database"},
+    tags={"kind": "postgres"},
+)
 def insert_into_table(context, table_name: String):
     sql = f"INSERT INTO {table_name} (column_1) VALUES (1);"
 
@@ -95,14 +101,12 @@ etl_local = etl.to_job(
     name="etl_local",
     config=local_config,
     resource_defs={"database": ResourceDefinition.mock_resource()},
-    tags={"Demo": True},
 )
 
 etl_docker = etl.to_job(
     name="etl_docker",
     config=docker_config,
     resource_defs={"database": postgres_resource},
-    tags={"Demo": True},
 )
 
 etl_local_partitioned_schedule = build_schedule_from_partitioned_job(etl_local)

@@ -2,7 +2,6 @@ import datetime
 
 import pytest
 from dagster import build_op_context
-
 from project.week_1 import (
     Aggregation,
     Stock,
@@ -11,6 +10,8 @@ from project.week_1 import (
     put_redis_data,
     week_1_pipeline,
 )
+
+DATA_FILE_PATH = "week_1/data/stock.csv"
 
 
 @pytest.fixture
@@ -48,7 +49,7 @@ def test_aggregation(aggregation):
 
 
 def test_get_s3_data():
-    with build_op_context(op_config={"s3_key": "data/stock.csv"}) as context:
+    with build_op_context(op_config={"s3_key": DATA_FILE_PATH}) as context:
         get_s3_data(context)
 
 
@@ -61,4 +62,4 @@ def test_put_redis_data(aggregation):
 
 
 def test_job():
-    week_1_pipeline.execute_in_process(run_config={"ops": {"get_s3_data": {"config": {"s3_key": "data/stock.csv"}}}})
+    week_1_pipeline.execute_in_process(run_config={"ops": {"get_s3_data": {"config": {"s3_key": DATA_FILE_PATH}}}})

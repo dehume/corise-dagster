@@ -1,8 +1,6 @@
-import csv
 from datetime import datetime
-from typing import List
 
-from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
+from dagster import usable_as_dagster_type
 from pydantic import BaseModel
 
 
@@ -32,34 +30,3 @@ class Stock(BaseModel):
 class Aggregation(BaseModel):
     date: datetime
     high: float
-
-
-@op(
-    config_schema={"s3_key": str},
-    out={"stocks": Out(dagster_type=List[Stock])},
-    tags={"kind": "s3"},
-    description="Get a list of stocks from an S3 file",
-)
-def get_s3_data(context):
-    output = list()
-    with open(context.op_config["s3_key"]) as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            stock = Stock.from_list(row)
-            output.append(stock)
-    return output
-
-
-@op
-def process_data():
-    pass
-
-
-@op
-def put_redis_data():
-    pass
-
-
-@job
-def week_1_pipeline():
-    pass

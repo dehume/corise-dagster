@@ -10,7 +10,6 @@ from dagster import (
     SkipReason,
     build_op_context,
 )
-
 from project.resources import mock_s3_resource
 from project.sensors import get_s3_keys
 from project.types import Aggregation, Stock
