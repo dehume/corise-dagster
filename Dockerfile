@@ -3,9 +3,9 @@
 # ----------------------------------------- #
 FROM python:3.7.5-slim AS base
 
+ARG COURSE_WEEK
 ENV VIRTUAL_ENV=/opt/venv
 ENV DAGSTER_HOME=/opt/dagster/dagster_home
-ENV DAGSTER_IO_PREFIX=dagster-misc
 ENV POETRY_VERSION=1.1.12
 ENV POETRY_HOME=/opt/poetry
 
@@ -40,6 +40,7 @@ RUN pip install --no-cache-dir --upgrade pip==21.3.1 setuptools==60.2.0 wheel==0
 # ----------------------------------------- #
 FROM base AS runner
 
+ARG COURSE_WEEK
 ENV PATH="$VIRTUAL_ENV/bin:$POETRY_HOME/bin:$PATH"
 
 RUN groupadd -r dagster && useradd -m -r -g dagster dagster
@@ -65,21 +66,27 @@ USER dagster:dagster
 CMD ["dagster-daemon", "run"]
 
 # ----------------------------------------- #
-#          User Code Repository 1
+#       User Code Repository Week 2
 # ----------------------------------------- #
-FROM runner AS content
+FROM runner AS week_2
+COPY week_2/dagster_ucr/ ./dagster_ucr
+USER dagster:dagster
+EXPOSE 4000
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "dagster_ucr/repo.py"]
 
-COPY content/ ./content
+# ----------------------------------------- #
+#       User Code Repository Week 3/4
+# ----------------------------------------- #
+FROM runner AS week_3_4_content
+ARG COURSE_WEEK
+COPY ${COURSE_WEEK}/content/ ./content
 USER dagster:dagster
 EXPOSE 4000
 CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "content/repo.py"]
 
-# ----------------------------------------- #
-#          User Code Repository 2
-# ----------------------------------------- #
-FROM runner AS project
-
-COPY project/ ./project
+FROM runner AS week_3_4_project
+ARG COURSE_WEEK
+COPY ${COURSE_WEEK}/project/ ./project
 USER dagster:dagster
 EXPOSE 4001
 CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4001", "-f", "project/repo.py"]

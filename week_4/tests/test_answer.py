@@ -2,15 +2,16 @@ import datetime
 from unittest.mock import MagicMock
 
 import pytest
-from dagster import ResourceDefinition, build_op_context
-from dagster_ucr.project.types import Aggregation, Stock
-from dagster_ucr.project.week_2 import (
+from dagster import AssetKey, build_op_context
+from project.types import Aggregation, Stock
+from project.week_4 import (
     get_s3_data,
+    get_s3_data_docker,
     process_data,
+    process_data_docker,
     put_redis_data,
-    week_2_pipeline,
+    put_redis_data_docker,
 )
-from dagster_ucr.resources import mock_s3_resource
 
 
 @pytest.fixture
@@ -31,6 +32,28 @@ def aggregation():
 @pytest.fixture
 def stock_list():
     return ["2020/09/01", "10.0", "10", "10.0", "10.0", "10.0"]
+
+
+@pytest.fixture
+def resource_config():
+    return {
+        "resources": {
+            "s3": {
+                "config": {
+                    "bucket": "dagster",
+                    "access_key": "test",
+                    "secret_key": "test",
+                    "endpoint_url": "http://host.docker.internal:4566",
+                }
+            },
+            "redis": {
+                "config": {
+                    "host": "redis",
+                    "port": 6379,
+                }
+            },
+        },
+    }
 
 
 def test_stock(stocks):
@@ -66,8 +89,16 @@ def test_put_redis_data(aggregation):
         assert redis_mock.put_data.called
 
 
-def test_week_2_pipeline(stock_list):
-    week_2_pipeline.execute_in_process(
-        run_config={"ops": {"get_s3_data": {"config": {"s3_key": "data/stock.csv"}}}},
-        resources={"s3": mock_s3_resource, "redis": ResourceDefinition.mock_resource()},
-    )
+def test_get_s3_data_docker():
+    assert get_s3_data_docker.required_resource_keys == {"s3", "io_manager"}
+    assert get_s3_data_docker.group_names_by_key == {AssetKey(["get_s3_data"]): "corise"}
+
+
+def test_process_data_docker():
+    assert process_data_docker.required_resource_keys == {"io_manager"}
+    assert process_data_docker.group_names_by_key == {AssetKey(["process_data"]): "corise"}
+
+
+def test_put_redis_data_docker():
+    assert put_redis_data_docker.required_resource_keys == {"redis", "io_manager"}
+    assert put_redis_data_docker.group_names_by_key == {AssetKey(["put_redis_data"]): "corise"}

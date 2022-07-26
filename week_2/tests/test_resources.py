@@ -1,5 +1,4 @@
 from dagster import build_init_resource_context
-
 from dagster_ucr.resources import S3, Redis, redis_resource, s3_resource
 
 
