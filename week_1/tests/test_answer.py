@@ -11,7 +11,10 @@ from project.week_1 import (
     week_1_pipeline,
 )
 
-DATA_FILE_PATH = "week_1/data/stock.csv"
+
+@pytest.fixture
+def file_path():
+    return "week_1/data/stock.csv"
 
 
 @pytest.fixture
@@ -48,8 +51,8 @@ def test_aggregation(aggregation):
     assert isinstance(aggregation, Aggregation)
 
 
-def test_get_s3_data():
-    with build_op_context(op_config={"s3_key": DATA_FILE_PATH}) as context:
+def test_get_s3_data(file_path):
+    with build_op_context(op_config={"s3_key": file_path}) as context:
         get_s3_data(context)
 
 
@@ -61,5 +64,5 @@ def test_put_redis_data(aggregation):
     put_redis_data(aggregation)
 
 
-def test_job():
-    week_1_pipeline.execute_in_process(run_config={"ops": {"get_s3_data": {"config": {"s3_key": DATA_FILE_PATH}}}})
+def test_job(file_path):
+    week_1_pipeline.execute_in_process(run_config={"ops": {"get_s3_data": {"config": {"s3_key": file_path}}}})
