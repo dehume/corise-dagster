@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from operator import attrgetter
 from typing import List
 
 from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
@@ -57,7 +58,7 @@ def get_s3_data(context):
 )
 def process_data(context, stocks):
     context.log.info(f"Looping through {len(stocks)} stocks")
-    highest_stock = max(stocks, key=lambda stocks: stocks.high)
+    highest_stock = max(stocks, key=attrgetter("high"))
     aggregation = Aggregation(date=highest_stock.date, high=highest_stock.high)
     context.log.info(f"Highest value: {aggregation}")
     return aggregation
