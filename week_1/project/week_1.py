@@ -56,11 +56,11 @@ def get_s3_data(context):
     out={"highest_stock": Out(dagster_type=Aggregation)},
     description="Given a list of stocks, return an Aggregation with the highest value"
 )
-def process_data(context, stocks):
-    context.log.info(f"Looping through {len(stocks)} stocks")
+def process_data(stocks):
+    # context.log.info(f"Looping through {len(stocks)} stocks")
     highest_stock = max(stocks, key=attrgetter("high"))
     aggregation = Aggregation(date=highest_stock.date, high=highest_stock.high)
-    context.log.info(f"Highest value: {aggregation}")
+    # context.log.info(f"Highest value: {aggregation}")
     return aggregation
 
 
