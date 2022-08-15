@@ -51,12 +51,14 @@ def get_s3_data(context):
 
 
 @op
-def process_data():
-    pass
+def process_data(stocks: Stock):
+    id, max= max(stocks, key=lambda stock: stock[4])
+    print('max:', max, "At index:",id)
+    return stocks
 
 
 @op
-def put_redis_data():
+def put_redis_data(aggregate: Aggregation):
     pass
 
 
