@@ -19,7 +19,7 @@ def process_data():
 
 @asset
 def put_redis_data():
-    # Use your op logic from week 3
+    # Use your op logic from week 3 (you will need to make a slight change)
     pass
 
 

@@ -29,13 +29,14 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - postgres
-      - workspace
+      - postgresql
     profiles:
       - dagster
     volumes:
       - ./${COURSE_WEEK}/dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
       - ./${COURSE_WEEK}/workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
     networks:
       - dagster_network
 
@@ -48,13 +49,14 @@ services:
     environment:
       << : *default-app-vars
     depends_on:
-      - postgres
-      - workspace
+      - postgresql
     profiles:
       - dagster
     volumes:
       - ./${COURSE_WEEK}/dagster.yaml:/opt/dagster/dagster_home/dagster.yaml
       - ./${COURSE_WEEK}/workspace.yaml:/opt/dagster/dagster_home/workspace.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /tmp/io_manager_storage:/tmp/io_manager_storage
     networks:
       - dagster_network
 

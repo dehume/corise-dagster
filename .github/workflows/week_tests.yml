@@ -1,0 +1,33 @@
+---
+name: Week Tests
+
+on:
+  workflow_call:
+    inputs:
+      week:
+        required: true
+        type: string
+
+permissions:
+  contents: read  # This is required for actions/checkout@v2
+
+jobs:
+  week-tests:
+    name: "Tests"
+    runs-on: ubuntu-latest
+    if: github.repository_owner != 'dehume' # Only run on forks
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Python 3.7
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.7
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Tests Week 1
+        run: pytest ${{ inputs.week }} -vv

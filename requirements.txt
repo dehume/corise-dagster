@@ -1,6 +1,7 @@
 dagster==0.15.0
 dagster-cloud==0.15.0
 dagster-postgres==0.15.0
+dagster-docker==0.15.0
 dagit==0.15.0
 pydantic==1.9.0
 redis==4.0.0

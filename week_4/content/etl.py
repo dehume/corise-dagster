@@ -44,6 +44,6 @@ create_table_docker, insert_into_table_docker = with_resources(
                 "password": "postgres_password",
                 "database": "postgres_db",
             }
-        }
+        },
     },
 )
