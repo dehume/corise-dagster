@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
 from typing import List
+from operator import attrgetter
 
 from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
 from pydantic import BaseModel
@@ -51,15 +52,16 @@ def get_s3_data(context):
 
 
 @op
-def process_data():
-    pass
+def process_data(stock_list: List[Stock]):
+    max_high = max(stock_list, key=attrgetter("high"))
+    return Aggregation(date=max_high.date, high=max_high.high)
 
 
 @op
-def put_redis_data():
+def put_redis_data(aggregation: Aggregation):
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))
