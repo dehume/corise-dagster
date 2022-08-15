@@ -1,6 +1,7 @@
 import csv
 from datetime import datetime
-from typing import List
+from typing import List, Optional
+from operator import attrgetter
 
 from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
 from pydantic import BaseModel
@@ -50,16 +51,26 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"agg": Out(dagster_type=Aggregation)},
+    tags={},
+    description="takes the list of stocks and determines the Stock with the greatest `high` value",
+)
+def process_data(stocks: List[Stock]):
+    highest_stock: Stock = max(stocks, key=attrgetter("high"))
+    return Aggregation(date=highest_stock.date, high=highest_stock.high)
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    ins={"agg": In(dagster_type=Aggregation)},
+    tags={"kind": "redis"},
+    description="Writes results to redis",
+)
+def put_redis_data(agg: Aggregation) -> Nothing:
+    print(f"Aggregator: {agg}")
 
 
 @job
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))
