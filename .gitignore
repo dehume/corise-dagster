@@ -156,3 +156,6 @@ cython_debug/
 
 # Mac OS
 .DS_Store
+
+# tmp folder genereate when run dagit
+tmp*
