@@ -62,7 +62,7 @@ def process_data(stocks: List[Stock]):
 description= "Upload an Aggregation to Redis",
 tags={"kind": "redis"}
 )
-def put_redis_data(aggregate: Aggregation):
+def put_redis_data(aggregate: Aggregation)-> Nothing:
     pass
 
 
