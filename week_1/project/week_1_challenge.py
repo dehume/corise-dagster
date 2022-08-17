@@ -60,16 +60,27 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+config_schema={"nlargest": int},
+out=DynamicOut(),
+description= "Given the list of stocks return the aggregation with the greatest",
+)
+def process_data(context, stocks: List[Stock]) -> Aggregation:
+    result = sorted(stocks, key= lambda p: p.high, reverse= True)
+    i  = 1
+    for stock in result[:context.op_config["nlargest"]]:
+        i = i + 1
+        yield DynamicOutput(Aggregation(date= stock.date, high = stock.high), mapping_key= str(i))
 
-
-@op
-def put_redis_data():
+@op(
+description= "Upload an Aggregation to Redis",
+tags={"kind": "redis"}
+)
+def put_redis_data(aggregate: Aggregation)-> Nothing:
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    aggregations = process_data(get_s3_data())
+    aggregations.map(put_redis_data)
