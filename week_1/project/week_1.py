@@ -38,9 +38,9 @@ class Aggregation(BaseModel):
     config_schema={"s3_key": str},
     out={"stocks": Out(dagster_type=List[Stock])},
     tags={"kind": "s3"},
-    description="Get a list of stocks from an S3 file",
+    description="Get a list of stonks from an S3 file",
 )
-def get_s3_data(context):
+def get_s3_data(context) -> List[Stock]:
     output = list()
     with open(context.op_config["s3_key"]) as csvfile:
         reader = csv.reader(csvfile)
@@ -50,16 +50,28 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+# Can specify output in decorator
+@op(
+    out={"aggregation": Out(dagster_type=Aggregation)},
+    description="Take a list of Stonks and return the phattest one.",
+)
+def process_data(stocks: List[Stock]) -> Aggregation:
+    sorted_stocks = sorted(stocks, key=lambda x: x.high, reverse=True)
+    top = sorted_stocks[0]
+    agg = Aggregation(date=top.date, high=top.high)
+    return agg
 
-
-@op
-def put_redis_data():
+# Can also specify input/output with type hints
+@op(
+    tags={"kind": "redis"},
+    description="Upload an Aggregation to Redis, or at least pretend to."
+)
+def put_redis_data(aggregation: Aggregation) -> Nothing:
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    stocks = get_s3_data()
+    processed = process_data(stocks)
+    put_redis_data(processed)

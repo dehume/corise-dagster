@@ -154,5 +154,8 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+# vim
+*.swp
+
 # Mac OS
 .DS_Store
