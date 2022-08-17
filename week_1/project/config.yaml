@@ -1,4 +1,4 @@
 ops:
   get_s3_data:
     config:
-      s3_key: data/stock.csv
+      s3_key: week_1/data/stock.csv
