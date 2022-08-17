@@ -54,7 +54,7 @@ WORKDIR $DAGSTER_HOME
 #                  Dagit
 # ----------------------------------------- #
 FROM runner AS dagit
-USER dagster:dagster
+# USER dagster:dagster
 EXPOSE 3000
 CMD ["dagit", "-h", "0.0.0.0", "--port", "3000", "-w", "workspace.yaml"]
 
@@ -62,7 +62,7 @@ CMD ["dagit", "-h", "0.0.0.0", "--port", "3000", "-w", "workspace.yaml"]
 #                  Daemon
 # ----------------------------------------- #
 FROM runner AS daemon
-USER dagster:dagster
+# USER dagster:dagster
 CMD ["dagster-daemon", "run"]
 
 # ----------------------------------------- #
@@ -78,6 +78,7 @@ CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "dagster_ucr
 #       User Code Repository Week 3/4
 # ----------------------------------------- #
 FROM runner AS week_3_4_content
+ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_content
 ARG COURSE_WEEK
 COPY ${COURSE_WEEK}/content/ ./content
 USER dagster:dagster
@@ -85,6 +86,7 @@ EXPOSE 4000
 CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "content/repo.py"]
 
 FROM runner AS week_3_4_project
+ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_project
 ARG COURSE_WEEK
 COPY ${COURSE_WEEK}/project/ ./project
 USER dagster:dagster

@@ -1,0 +1,19 @@
+---
+name: Week 2
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - week_2/**
+  push:
+    branches: [master]
+    paths:
+      - week_2/**
+
+jobs:
+  stage:
+    name: "Tests"
+    uses: ./.github/workflows/week_tests.yml
+    with:
+      week: week_2

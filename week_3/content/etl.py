@@ -40,6 +40,7 @@ def insert_into_table(context, table_name: String):
 
     context.log.info("Batch inserted")
 
+    # New this week
     context.log_event(
         AssetMaterialization(
             asset_key="my_micro_batch",
