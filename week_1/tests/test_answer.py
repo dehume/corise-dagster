@@ -11,7 +11,7 @@ from project.week_1 import (
     week_1_pipeline,
 )
 
-DATA_FILE_PATH = "week_1/data/stock.csv"
+DATA_FILE_PATH = "../WEEK_1/data/stock.csv" 
 
 
 @pytest.fixture
