@@ -7,18 +7,19 @@ from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 @op(
     config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
     out={"stocks": Out(dagster_type=List[Stock])},
     tags={"kind": "s3"},
     description="Get a list of stocks from an S3 file",
 )
 def get_s3_data(context):
     output = list()
-    with open(context.op_config["s3_key"]) as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            stock = Stock.from_list(row)
-            output.append(stock)
-    return output
+    s3_key = context.op_config["s3_key"]
+    context.log.info(f's3_key is {s3_key}')
+    s3 =context.resources.s3
+    context.log.info(f's3 is {s3}') 
+    return([Stock.from_list(x) for x in s3.get_data(s3_key)])
+ 
 
 
 @op(
