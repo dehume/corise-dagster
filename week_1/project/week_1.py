@@ -1,4 +1,5 @@
 import csv
+import logging
 from datetime import datetime
 from typing import List
 
@@ -51,15 +52,22 @@ def get_s3_data(context):
 
 
 @op
-def process_data():
-    pass
+def process_data(raw_stocks: List[Stock]) -> Aggregation:
+    highest_stock = max(raw_stocks, key=lambda x: x.high)
+    return Aggregation(date=highest_stock.date, high=highest_stock.high)
 
 
 @op
-def put_redis_data():
+def put_redis_data(aggregation: Aggregation):
+    logging.info(f"Put {aggregation} in redis")
     pass
 
 
-@job
+@job()
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))
+
+
+week_1_pipeline.execute_in_process(
+    run_config={'ops': {'get_s3_data': {'config': {'s3_key': "week_1/data/stock.csv"}}}}
+)
