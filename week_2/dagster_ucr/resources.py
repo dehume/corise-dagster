@@ -47,6 +47,10 @@ class S3:
         data = obj["Body"].read().decode("utf-8").split("\n")
         for record in csv.reader(data):
             yield record
+            
+    def get_keys(self):
+        for key in self.client.list_objects(Bucket=self.bucket)['Contents']:
+            return(key['Key'])
 
 
 class Redis:

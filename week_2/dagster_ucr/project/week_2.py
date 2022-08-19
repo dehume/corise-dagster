@@ -18,6 +18,7 @@ def get_s3_data(context):
     context.log.info(f's3_key is {s3_key}')
     s3 =context.resources.s3
     context.log.info(f's3 is {s3}') 
+    context.log.info(f'list of keys are: {s3.get_keys()}')
     return([Stock.from_list(x) for x in s3.get_data(s3_key)])
  
 
@@ -66,7 +67,7 @@ docker = {
             }
         },
     },
-    "ops": {"get_s3_data": {"config": {"s3_key": "preifx/stock.csv"}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
 
 local_week_2_pipeline = week_2_pipeline.to_job(
