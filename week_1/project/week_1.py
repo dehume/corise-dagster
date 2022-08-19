@@ -39,7 +39,7 @@ class Aggregation(BaseModel):
     config_schema={"s3_key": str},
     out={"stocks": Out(dagster_type=List[Stock])},
     tags={"kind": "s3"},
-    description="Get a list of stocks from an S3 file",
+    description="Getting a list of stocks from an S3 file",
 )
 def get_s3_data(context):
     output = list()
