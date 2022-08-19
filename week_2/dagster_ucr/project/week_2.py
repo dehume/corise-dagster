@@ -13,14 +13,12 @@ from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
     description="Get a list of stocks from an S3 file",
 )
 def get_s3_data(context):
-    output = list()
     s3_key = context.op_config["s3_key"]
     context.log.info(f's3_key is {s3_key}')
     s3 =context.resources.s3
-    context.log.info(f's3 is {s3}') 
+    context.log.info(f's3 is {s3}')
     context.log.info(f'list of keys are: {s3.get_keys()}')
     return([Stock.from_list(x) for x in s3.get_data(s3_key)])
- 
 
 
 @op(
