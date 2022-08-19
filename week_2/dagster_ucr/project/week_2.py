@@ -5,15 +5,32 @@ from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    config_schema={"s3_key": str},
+    out={"stocks": Out(dagster_type=List[Stock],
+    description="List of Stocks")},
+)
+def get_s3_data(context):
+    output = list()
+    with open(context.op_config["s3_key"]) as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            stock = Stock.from_list(row)
+            output.append(stock)
+    return output
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"highest_stock": Out(dagster_type=Aggregation)},
+    description="Given a list of stocks, return an Aggregation with the highest value"
+)
+def process_data(stocks):
+    # context.log.info(f"Looping through {len(stocks)} stocks")
+    highest_stock = max(stocks, key=attrgetter("high"))
+    aggregation = Aggregation(date=highest_stock.date, high=highest_stock.high)
+    # context.log.info(f"Highest value: {aggregation}")
+    return aggregation
 
 
 @op
@@ -23,8 +40,7 @@ def put_redis_data():
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    put_redis_data(process_data(get_s3_data()))
 
 
 local = {
