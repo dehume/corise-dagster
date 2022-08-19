@@ -51,15 +51,17 @@ def get_s3_data(context):
 
 
 @op
-def process_data():
-    pass
+def process_data(stocks: List[Stock]) -> Aggregation:
+    """Returns the Stock with the greatest high value from a list of Stocks"""
+    max_stock = max(stocks, key=lambda stock: stock.high)
+    return Aggregation(date=max_stock.date, high=max_stock.high)
 
 
 @op
-def put_redis_data():
+def put_redis_data(max_stock: Aggregation):
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))
