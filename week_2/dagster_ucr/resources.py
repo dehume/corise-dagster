@@ -117,7 +117,7 @@ def s3_resource(context) -> S3:
 @resource(
     config_schema={
         "host": Field(String),
-        "port": Field(String),
+        "port": Field(Int),
     },
     description="Resource for radis"
 )
