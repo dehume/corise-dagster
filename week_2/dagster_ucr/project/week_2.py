@@ -15,7 +15,7 @@ from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 def get_s3_data(context):
     s3_key = context.op_config["s3_key"]
     context.log.info(f's3_key is {s3_key}')
-    s3 =context.resources.s3
+    s3 = context.resources.s3
     context.log.info(f's3 is {s3}')
     context.log.info(f'list of keys are: {s3.get_keys()}')
     return([Stock.from_list(x) for x in s3.get_data(s3_key)])
@@ -33,10 +33,16 @@ def process_data(stocks):
 
 
 @op(
-    ins={"highest_value": In(dagster_type=Aggregation)}
+    required_resource_keys={"redis"},
+    ins={"highest_value": In(dagster_type=Aggregation)},
+    tags={"kind": "redis"},
 )
-def put_redis_data(highest_value):
-    pass
+def put_redis_data(context, highest_value):
+    redis = context.resources.redis
+    redis.put_data(
+        name=highest_value.date.strftime("%m-%d-%Y"),
+        value=highest_value.high
+    )
 
 
 @graph
