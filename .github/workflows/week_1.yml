@@ -17,3 +17,4 @@ jobs:
     uses: ./.github/workflows/week_tests.yml
     with:
       week: week_1
+      command: pytest week_1 -vv -m "not challenge"
