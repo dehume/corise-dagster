@@ -56,7 +56,7 @@ def get_s3_data(context):
     out={"agg": Out(dagster_type=Aggregation)},
     description="Find the highest high value from a list of stocks"
     )
-def process_data(stock_list: list):
+def process_data(stock_list):
     high_stock = max(stock_list, key=attrgetter('high'))
     agg = Aggregation(date=high_stock.date, high=high_stock.high)
     return agg
