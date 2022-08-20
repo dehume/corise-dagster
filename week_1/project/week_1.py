@@ -51,15 +51,19 @@ def get_s3_data(context):
 
 
 @op
-def process_data():
-    pass
+def process_data(stocks):
+    result = None
+    for stock in stocks:
+        if result is None or result.high < stock.high:
+            result = Aggregation(date=stock.date, high=stock.high)
+    return result
 
 
 @op
-def put_redis_data():
+def put_redis_data(aggregation):
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    process_data(get_s3_data())
