@@ -1,3 +1,4 @@
+# pylint: skip-file
 import csv
 from typing import Iterator
 from unittest.mock import MagicMock
