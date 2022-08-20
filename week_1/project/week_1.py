@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 from typing import List
 
-from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
+from dagster import In, Nothing, Out, job, op, usable_as_dagster_type, get_dagster_logger
 from pydantic import BaseModel
 
 
@@ -61,8 +61,15 @@ def process_data(stocks: List[Stock]) -> Aggregation:
     return Aggregation(date=max_stock.date, high=max_stock.high)
 
 
-@op
-def put_redis_data():
+@op(
+    ins={"agg_max": In(dagster_type=Aggregation)},
+    out=None,
+    description="Write to Redis"
+)
+def put_redis_data(agg_max: Aggregation) -> None:
+    # Log the output
+    logger = get_dagster_logger()
+    logger.info(f"Write {agg_max} to Redis.")
     pass
 
 
