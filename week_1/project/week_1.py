@@ -51,7 +51,7 @@ def get_s3_data(context):
 
 
 @op
-def process_data(stocks):
+def process_data(stocks: list) -> Aggregation:
     result = None
     for stock in stocks:
         if result is None or result.high < stock.high:
@@ -60,7 +60,7 @@ def process_data(stocks):
 
 
 @op
-def put_redis_data(aggregation):
+def put_redis_data(aggregation: Aggregation):
     pass
 
 
