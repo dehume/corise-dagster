@@ -50,7 +50,10 @@ def get_s3_data(context):
     return output
 
 
-@op
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"aggregation": Out(dagster_type=Aggregation)},
+)
 def process_data(stocks: list) -> Aggregation:
     result = None
     for stock in stocks:
