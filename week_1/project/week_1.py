@@ -50,9 +50,15 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"agg_max": Out(dagster_type=Aggregation)},
+    description="Determine the stock with the highest value"
+)
+def process_data(stocks: List[Stock]) -> Aggregation:
+    # Find the stock with the highest value
+    max_stock = max(stocks, key=lambda x: x.high)
+    return Aggregation(date=max_stock.date, high=max_stock.high)
 
 
 @op
