@@ -75,4 +75,4 @@ def put_redis_data(agg_max: Aggregation) -> None:
 
 @job
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))
