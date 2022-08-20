@@ -1,3 +1,5 @@
+import datetime
+from operator import attrgetter
 from typing import List
 
 from dagster import In, Nothing, Out, ResourceDefinition, graph, op
@@ -7,16 +9,16 @@ from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 @op(
     config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
     out={"stocks": Out(dagster_type=List[Stock],
     description="List of Stocks")},
+    tags={"kind": "s3"},
 )
 def get_s3_data(context):
     output = list()
-    with open(context.op_config["s3_key"]) as csvfile:
-        reader = csv.reader(csvfile)
-        for row in reader:
-            stock = Stock.from_list(row)
-            output.append(stock)
+    for row in context.resources.s3.get_data(context.op_config["s3_key"]):
+        stock = Stock.from_list(row)
+        output.append(stock)
     return output
 
 
@@ -33,9 +35,18 @@ def process_data(stocks):
     return aggregation
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    required_resource_keys={"redis"},
+    ins={"highest_stock": In(dagster_type=Aggregation)},
+    out=Out(dagster_type=Nothing),
+    description="Upload aggregations to Redis",
+    tags={"kind": "redis"},
+)
+def put_redis_data(context, highest_stock):
+    context.resources.redis.put_data(
+        name=f"{highest_stock.date}:%m/%d/%Y",
+        value=str(highest_stock.high)
+    )
 
 
 @graph
