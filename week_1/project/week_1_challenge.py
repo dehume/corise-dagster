@@ -60,16 +60,37 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    config_schema={"nlargest": int},
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out=DynamicOut(Aggregation),
+    description="Takes a list of stocks and outputs X of the highest value ones"
+)
+def process_data(context, stocks):
+    top_n_criteria = context.op_config["nlargest"]
+    context.log.info(f'Number of stocks to pick is {top_n_criteria}')
+    
+    if (top_n_criteria > len(stocks)):
+        raise Exception('Value nlargest input is larger than the list of stocks available')
+
+    highest_value_stock_list = sorted(stocks, key=lambda x: x.high, reverse=True)[:top_n_criteria]
+    context.log.info(f'Picked top {top_n_criteria} stocks: {highest_value_stock_list}')
+    for stock in highest_value_stock_list:
+        yield DynamicOutput(Aggregation(date = stock.date, high = stock.high), mapping_key=str(stock.volume))
 
 
-@op
-def put_redis_data():
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation)},
+    tags={"kind": "redis"},
+    description="Upload an aggregation to redis"
+)
+def put_redis_data(context, aggregation):
+    context.log.info(f'put_redis_data received the following aggregation: {aggregation}')
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    stock_list = get_s3_data()
+    n_highest_value_stocks = process_data(stock_list)
+    n_highest_value_stocks.map(put_redis_data)
