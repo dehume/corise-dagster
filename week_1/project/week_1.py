@@ -66,4 +66,4 @@ def put_redis_data(aggregation):
 
 @job
 def week_1_pipeline():
-    process_data(get_s3_data())
+    put_redis_data(process_data(get_s3_data()))
