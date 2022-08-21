@@ -27,7 +27,9 @@ class Stock(BaseModel):
             low=float(input_list[5]),
         )
 
+
 Stocks = List[Stock]
+
 
 @usable_as_dagster_type(description="Aggregation of stock data")
 class Aggregation(BaseModel):
@@ -51,11 +53,15 @@ def get_s3_data(context):
     return output
 
 
-@op(ins={"stocks": In(dagster_type=Stocks)}, out={"Aggregation": Out(dagster_type=Aggregation)}, description="Find stock with highest value according to the 'high' field")
+@op(
+    ins={"stocks": In(dagster_type=Stocks)},
+    out={"Aggregation": Out(dagster_type=Aggregation)},
+    description="Find stock with highest value according to the 'high' field",
+)
 def process_data(stocks: Stocks) -> Aggregation:
-   highest = sorted(stocks, key=lambda stock: stock.high, reverse=True)[0]
-   aggregation = Aggregation(date=highest.date, high=highest.high)
-   return aggregation
+    highest = sorted(stocks, key=lambda stock: stock.high, reverse=True)[0]
+    aggregation = Aggregation(date=highest.date, high=highest.high)
+    return aggregation
 
 
 @op
@@ -65,6 +71,6 @@ def put_redis_data(aggregation: Aggregation) -> None:
 
 @job
 def week_1_pipeline():
-   stocks = get_s3_data()
-   aggregation = process_data(stocks)
-   put_redis_data(aggregation)
+    stocks = get_s3_data()
+    aggregation = process_data(stocks)
+    put_redis_data(aggregation)
