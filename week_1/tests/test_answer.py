@@ -13,6 +13,9 @@ from project.week_1 import (
 )
 
 
+DATA_FILE_PATH = "week_1/data/stock.csv" 
+
+
 @pytest.fixture
 def file_path():
     return "week_1/data/stock.csv"
