@@ -1,8 +1,9 @@
 import csv
+from concurrent.futures import process
 from datetime import datetime
 from typing import List
 
-from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
+from dagster import In, Out, job, op, usable_as_dagster_type
 from pydantic import BaseModel
 
 
@@ -51,15 +52,26 @@ def get_s3_data(context):
 
 
 @op
-def process_data():
-    pass
+def process_data(stocks : List[Stock]):
+
+    highest_stock:Stock = None
+    for stock in stocks:
+        if highest_stock is None:
+            highest_stock = stock
+            continue
+        if stock.high > highest_stock.high:
+            highest_stock = stock
+
+    return Aggregation(date=highest_stock.date, high=highest_stock.high)
 
 
-@op
-def put_redis_data():
-    pass
+@op(ins={"highest_stock": In(dagster_type=Aggregation, description="the stock with the greatest high value")})
+def put_redis_data(highest_stock):
+    return highest_stock
 
 
-@job
+@job()
 def week_1_pipeline():
-    pass
+    s3_stocks = get_s3_data()
+    highest_stock = process_data(s3_stocks)
+    put_redis_data(highest_stock)
