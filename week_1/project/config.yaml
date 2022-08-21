@@ -2,3 +2,6 @@ ops:
   get_s3_data:
     config:
       s3_key: week_1/data/stock.csv
+  process_data:
+    config:
+      nlargest: 5
