@@ -1,6 +1,10 @@
 # Tests
 .PHONY: week_1_tests
 week_1_tests:
+	@pytest week_1 -vv -m "not challenge"
+
+.PHONY: week_1_challenge_tests
+week_1_challenge_tests:
 	@pytest week_1 -vv
 
 .PHONY: week_2_tests

@@ -6,10 +6,9 @@ def get_name(context) -> str:
     return context.op_config["name"]
 
 
-@op(config_schema={"location": String})
-def hello(context, name: str):
-    location = context.op_config["location"]
-    print(f"Hello, {name}! How is {location}?")
+@op
+def hello(name: str):
+    print(f"Hello, {name}!")
 
 
 # @op(config_schema={"location": String})
@@ -27,5 +26,5 @@ def hello_dagster():
 
 
 job = hello_dagster.to_job(config={"ops": {"get_name": {"config": {"name": "dagster"}}}})
-hello_chris = hello_dagster.to_job(config={"ops": {"get_name": {"config": {"name": "Chris"}}}})
-hello_emily = hello_dagster.to_job(config={"ops": {"get_name": {"config": {"name": "Emily"}}}})
+# hello_chris = hello_dagster.to_job(config={"ops": {"get_name": {"config": {"name": "Chris"}}}})
+# hello_emily = hello_dagster.to_job(config={"ops": {"get_name": {"config": {"name": "Emily"}}}})
