@@ -63,7 +63,8 @@ def process_data(stocks: List):
 
 @op(ins={"aggregate": In(dagster_type=Aggregation)})
 def put_redis_data(aggregate: Aggregation):
-    pass
+    log = get_dagster_logger()
+    log.info("Put Data into Redis")
 
 
 @job
