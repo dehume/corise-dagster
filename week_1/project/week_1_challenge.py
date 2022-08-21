@@ -12,6 +12,7 @@ from dagster import (
     job,
     op,
     usable_as_dagster_type,
+    get_dagster_logger
 )
 from pydantic import BaseModel
 
@@ -60,16 +61,34 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    config_schema={"nlargest": int},
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out=DynamicOut(),
+    description="Aggregate stock data",
+)
+def process_data(context,stocks: List[Stock]) -> Aggregation:
+    stocks_sorted = sorted(stocks, key=lambda x: x.high, reverse=True)
+    for i in range(context.op_config["nlargest"]):
+        record = Aggregation(date=stocks_sorted[i].date, high=stocks_sorted[i].high)   
+        yield DynamicOutput(value=record,mapping_key=f"nlargest_{str(i+1)}")
+  
 
 
-@op
-def put_redis_data():
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation)},
+    out=Out(Nothing),
+    tags={"kind": "redis"},
+    description="Upload aggregation to Redis",
+)
+def put_redis_data(aggregation: Aggregation):
+    log = get_dagster_logger()
+    log.info(aggregation)
     pass
+
 
 
 @job
 def week_1_pipeline():
-    pass
+    stocks = get_s3_data()
+    process_data(stocks).map(put_redis_data)
