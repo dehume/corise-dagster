@@ -12,6 +12,7 @@ from dagster import (
     job,
     op,
     usable_as_dagster_type,
+    OpExecutionContext,
 )
 from pydantic import BaseModel
 
@@ -50,7 +51,7 @@ class Aggregation(BaseModel):
     tags={"kind": "s3"},
     description="Get a list of stocks from an S3 file",
 )
-def get_s3_data(context):
+def get_s3_data(context: OpExecutionContext):
     output = list()
     with open(context.op_config["s3_key"]) as csvfile:
         reader = csv.reader(csvfile)
@@ -60,16 +61,30 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    config_schema={"nlargest": int},
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out=DynamicOut(dagster_type=Aggregation),
+    tags={},
+    description="takes the list of stocks and determines the Stocsk with the nlargest values",
+)
+def process_data(context: OpExecutionContext, stocks: List[Stock]):
+    nlargest_param: int = context.op_config["nlargest"]
+    highest_stocks: List[Stock] = nlargest(nlargest_param, stocks, key=lambda x: x.high)
+    for stock in highest_stocks:
+        yield DynamicOutput(Aggregation(date=stock.date, high=stock.high), mapping_key=stock.date.strftime("%Y%d%m"))
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    ins={"agg": In(dagster_type=Aggregation)},
+    tags={"kind": "redis"},
+    description="Writes results to redis",
+)
+def put_redis_data(agg: Aggregation) -> Nothing:
+    print(agg)
 
 
 @job
 def week_1_pipeline():
-    pass
+    aggs = process_data(get_s3_data())
+    aggs.map(put_redis_data)
