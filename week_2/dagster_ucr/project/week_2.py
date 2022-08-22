@@ -10,10 +10,15 @@ def get_s3_data():
     pass
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
+@op(
+    out={"aggregation": Out(dagster_type=Aggregation)},
+    description="Take a list of Stonks and return the phattest one.",
+)
+def process_data(stocks: List[Stock]) -> Aggregation:
+    sorted_stocks = sorted(stocks, key=lambda x: x.high, reverse=True)
+    top = sorted_stocks[0]
+    agg = Aggregation(date=top.date, high=top.high)
+    return agg
 
 
 @op
@@ -23,8 +28,9 @@ def put_redis_data():
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    stocks = get_s3_data()
+    processed = process_data(stocks)
+    put_redis_data(processed)
 
 
 local = {
