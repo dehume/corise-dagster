@@ -1,21 +1,15 @@
 import datetime
 
-import project.week_1_challenge as challenge
 import pytest
 from dagster import build_op_context
-from project.week_1 import (
-    Aggregation,
-    Stock,
-    get_s3_data,
-    process_data,
-    put_redis_data,
-    week_1_pipeline,
-)
+
+from week_1.project.week_1 import Stock, Aggregation, get_s3_data, process_data, put_redis_data, week_1_pipeline
+from week_1.project.week_1_challenge import week_1_pipeline as week_1_challenge
 
 
 @pytest.fixture
 def file_path():
-    return "week_1/data/stock.csv"
+    return "../data/stock.csv"
 
 
 @pytest.fixture
@@ -86,7 +80,7 @@ def test_job(file_path):
 
 @pytest.mark.challenge
 def test_job_challenge(file_path):
-    challenge.week_1_pipeline.execute_in_process(
+    week_1_challenge.execute_in_process(
         run_config={
             "ops": {
                 "get_s3_data": {"config": {"s3_key": file_path}},
