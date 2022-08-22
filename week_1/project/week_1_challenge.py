@@ -60,16 +60,32 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+def sortkey(stock):
+    return stock.high
+
+@op(
+    config_schema={"nlargest": int},
+    ins={"stock_list": In(dagster_type=List[Stock])},
+    out=DynamicOut(),
+    description="Return n highest stocks"
+    )
+def process_data(context, stock_list:list) -> Aggregation:
+    n = context.op_config["nlargest"]
+    n_highest_stocks = nlargest(n, stock_list, key=sortkey)
+    for i, stock in enumerate(n_highest_stocks):
+        yield DynamicOutput(Aggregation(date=stock.date, high=stock.high), mapping_key=str(i))
 
 
-@op
-def put_redis_data():
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation)},
+    description="Put Aggregation data into Redis"
+    )
+def put_redis_data(aggregation):
     pass
+
 
 
 @job
 def week_1_pipeline():
-    pass
+    processed_stocks = process_data(get_s3_data())
+    processed_stocks.map(put_redis_data)
