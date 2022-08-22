@@ -57,7 +57,7 @@ def get_s3_data(context):
 )
 def process_data(stocks: List[Stock]) -> Aggregation:
     stock_high_list = [stock.high for stock in stocks]
-    highest_stock = heapq.nlargest(1,stock_high_list)
+    highest_stock = float(heapq.nlargest(1,stock_high_list)[0])
     highest_date = stocks[stock_high_list.index(highest_stock)].date
     return Aggregation(date=highest_date,high=highest_stock)
 
