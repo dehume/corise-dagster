@@ -3,6 +3,6 @@ repos:
   hooks:
     - id: unit_tests
       name: run unit tests
-      entry: poetry run pytest week_2
+      entry: poetry run pytest week_2 -vv
       language: system
       pass_filenames: false
