@@ -34,8 +34,9 @@ def process_data(stocks: List[Stock]) -> Aggregation:
 )
 def put_redis_data(context, agg: Aggregation):
     redis = context.resources.redis
-    redis.put_data(agg.date, agg.high)
-    context.log.info(f"put key: ({agg.date}, val: {agg.high}) to redis")
+    key, val = agg.date.strftime("%Y-%m-%d"), agg.high
+    redis.put_data(key, val)
+    context.log.info(f"put key: ({key}, val: {val}) to redis")
 
 
 @graph
