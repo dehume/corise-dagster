@@ -1,8 +1,6 @@
 from typing import List
 
-from dagster import In, Nothing, Out, ResourceDefinition, graph, op
-from pkg_resources import require
-from py import process
+from dagster import ResourceDefinition, graph, op
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
