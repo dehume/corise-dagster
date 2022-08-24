@@ -16,7 +16,6 @@ dbt-postgres = "1.1.0"
 pydantic = "^1.9.0"
 redis = "^4.0.0"
 boto3 = "^1.24.0"
-pre-commit = "^2.20.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.1.2"
@@ -38,4 +37,4 @@ ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api" 
+build-backend = "poetry.core.masonry.api"
