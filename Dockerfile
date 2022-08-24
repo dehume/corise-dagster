@@ -1,7 +1,7 @@
 # ----------------------------------------- #
 #                 Base
 # ----------------------------------------- #
-FROM python:3.7.5-slim AS base
+FROM python:3.8.5-slim AS base
 
 ARG COURSE_WEEK
 ENV VIRTUAL_ENV=/opt/venv
