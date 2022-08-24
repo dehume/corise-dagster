@@ -2,7 +2,7 @@ import csv
 from datetime import datetime
 from typing import List
 
-from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
+from dagster import In, Nothing, Out, job, op, usable_as_dagster_type, get_dagster_logger
 from pydantic import BaseModel
 
 
@@ -50,16 +50,23 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List, description="List from CSV")},
+    out={"aggregation": Out(dagster_type=Aggregation, description="Aggregation output")},
+    description="Find the highest value in the high field",
+)
+def process_data(stocks: List):
+    highest = sorted(stocks, key=lambda stock: stock.high, reverse=True).pop(0)
+
+    return Aggregation(date=highest.date, high=highest.high)
 
 
-@op
-def put_redis_data():
-    pass
+@op(ins={"aggregate": In(dagster_type=Aggregation)})
+def put_redis_data(aggregate: Aggregation):
+    log = get_dagster_logger()
+    log.info("Put Data into Redis")
 
 
 @job
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))
