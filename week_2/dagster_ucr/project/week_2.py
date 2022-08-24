@@ -5,26 +5,49 @@ from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
+    out={"stocks": Out(dagster_type=List[Stock])},
+    tags={"kind": "s3"},
+    description="Get a list of stocks from an S3 file",
+)
+def get_s3_data(context):
+    s3_key = context.op_config["s3_key"]
+    context.log.info(f's3_key is {s3_key}')
+    s3 = context.resources.s3
+    context.log.info(f's3 is {s3}')
+    context.log.info(f'list of keys are: {s3.get_keys()}')
+    return([Stock.from_list(x) for x in s3.get_data(s3_key)])
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"highest_value": Out(dagster_type=Aggregation)},
+    tags={"kind": "python"},
+    description="Take the list of stocks and determine the Stock with the greatest high value"
+)
+def process_data(stocks):
+    highest_value = max(stocks, key=lambda stock: stock.high)
+    return Aggregation(date=highest_value.date, high=highest_value.high)
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    required_resource_keys={"redis"},
+    ins={"highest_value": In(dagster_type=Aggregation)},
+    tags={"kind": "redis"},
+)
+def put_redis_data(context, highest_value):
+    redis = context.resources.redis
+    redis.put_data(
+        name=highest_value.date.strftime("%m-%d-%Y"),
+        value=highest_value.high
+    )
 
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    put_redis_data(process_data(get_s3_data()))
 
 
 local = {

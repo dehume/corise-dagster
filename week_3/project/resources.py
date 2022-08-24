@@ -1,3 +1,4 @@
+# pylint: skip-file
 import csv
 from random import randint
 from typing import Iterator

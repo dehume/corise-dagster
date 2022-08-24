@@ -1,3 +1,4 @@
+# pylint: skip-file
 import csv
 from typing import Iterator
 from unittest.mock import MagicMock
@@ -47,6 +48,10 @@ class S3:
         data = obj["Body"].read().decode("utf-8").split("\n")
         for record in csv.reader(data):
             yield record
+            
+    def get_keys(self):
+        for key in self.client.list_objects(Bucket=self.bucket)['Contents']:
+            return(key['Key'])
 
 
 class Redis:
@@ -91,13 +96,35 @@ def mock_s3_resource():
     return s3_mock
 
 
-@resource
-def s3_resource():
+@resource(
+    config_schema={
+        "bucket": Field(String),
+        "access_key": Field(String),
+        "secret_key": Field(String),
+        "endpoint_url": Field(String),
+    },
+    description="A resource that can run Redis"
+)
+def s3_resource(context) -> S3:
     """This resource defines a S3 client"""
-    pass
+    return S3(
+        bucket=context.resource_config["bucket"],
+        access_key=context.resource_config["access_key"],
+        secret_key=context.resource_config["secret_key"],
+        endpoint_url=context.resource_config["endpoint_url"],
+    )
 
 
-@resource
-def redis_resource():
+@resource(
+    config_schema={
+        "host": Field(String),
+        "port": Field(Int),
+    },
+    description="A resource that can run Redis"
+)
+def redis_resource(context) -> Redis:
     """This resource defines a Redis client"""
-    pass
+    return Redis(
+        host=context.resource_config["host"],
+        port=context.resource_config["port"]
+    )

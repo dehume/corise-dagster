@@ -3,11 +3,13 @@ name: Week 2
 
 on:
   pull_request:
-    branches: [master]
+    branches:
+      - '**'
     paths:
       - week_2/**
   push:
-    branches: [master]
+    branches:
+      - '**'
     paths:
       - week_2/**
 
