@@ -60,8 +60,6 @@ def get_s3_data(context):
     description="get highest stock"
 )
 def process_data(StockList):
-    # This op will require the output of the get_s3_data (which will be a list of Stock). The output of the process_data will be our custom type Aggregation
-    # The processing occurring within the op will take the list of stocks and determine the Stock with the greatest high value.
     hi_stock : Stock = max(StockList, key=attrgetter("high"))
     stock_agg = Aggregation(date=hi_stock.date, high=hi_stock.high)
     return stock_agg
@@ -74,7 +72,6 @@ def process_data(StockList):
 )
 def put_redis_data(agg: Aggregation):
     pass
-
 
 
 @job
