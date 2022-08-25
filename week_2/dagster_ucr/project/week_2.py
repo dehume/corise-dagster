@@ -5,9 +5,17 @@ from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
+    out={"stocks": Out(dagster_type=List[Stock], description="List of Stocks")},
+)
+def get_s3_data(context) -> List[Stock]:
+    output = list()
+    for row in context.resources.s3.get_data(context.op_config["s3_key"]):
+        stock = Stock.from_list(row)
+        output.append(stock)
+    return output
 
 
 @op(
@@ -21,9 +29,13 @@ def process_data(stocks: List[Stock]) -> Aggregation:
     return agg
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    tags={"kind": "redis"},
+    required_resource_keys={"redis"},
+    description="Upload an Aggregation to Redis where the whole world can see it.",
+)
+def put_redis_data(context, aggregation: Aggregation) -> Nothing:
+    context.resources.redis.put_data(aggregation.date, str(aggregation.high))
 
 
 @graph
