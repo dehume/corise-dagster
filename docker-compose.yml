@@ -124,6 +124,8 @@ services:
       - week_2
     networks:
       - dagster_network
+    extra_hosts:
+      - host.docker.internal:host-gateway
 
   content:
     build:
