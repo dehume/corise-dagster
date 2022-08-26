@@ -1,30 +1,79 @@
 from typing import List
-
-from dagster import In, Nothing, Out, ResourceDefinition, graph, op
+import csv
+from datetime import datetime
+from dagster import In, Nothing, Out, ResourceDefinition, graph, op, usable_as_dagster_type
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
+from pydantic import BaseModel
+
+@usable_as_dagster_type(description="Stock data")
+class Stock(BaseModel):
+    date: datetime
+    close: float
+    volume: int
+    open: float
+    high: float
+    low: float
+
+    @classmethod
+    def from_list(cls, input_list: list):
+        """Do not worry about this class method for now"""
+        return cls(
+            date=datetime.strptime(input_list[0], "%Y/%m/%d"),
+            close=float(input_list[1]),
+            volume=int(float(input_list[2])),
+            open=float(input_list[3]),
+            high=float(input_list[4]),
+            low=float(input_list[5]),
+        )
 
 
-@op
-def get_s3_data():
-    pass
+@usable_as_dagster_type(description="Aggregation of stock data")
+class Aggregation(BaseModel):
+    date: datetime
+    high: float
+
+@op(
+    required_resource_keys={"s3"},
+    tags={"kind": "s3"},
+)
+def get_s3_data(context):
+    output = list()
+    #key = context.resources.op_config["s3_key"]
+    stocks = context.resources.s3.get_data("key_name")
+    for row in stocks:
+        stock = Stock.from_list(row)
+        output.append(stock)
+    return output
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
+@op(out={"aggregation": Out(dagster_type=Aggregation, description= "return class with values")})
+def process_data(stocks):
+    high_val = 0
+    date = datetime
+    
+    for stock in stocks:
+        if stock.high > high_val:
+            high_val = stock.high
+            date = stock.date
+    
+    return Aggregation(date=date, high=high_val)
 
 
-@op
-def put_redis_data():
-    pass
+#@op(ins={"aggregation": In(dagster_type=Aggregation, description="Aggregated Stocks Values")})
+@op(
+    #config_schema={"host": str, "port": int},
+    required_resource_keys={"redis"},
+    tags={"kind": "redis"},
+)
+def put_redis_data(context, aggregation):
+    context.resources.redis.put_data(aggregation.date, aggregation.high)
 
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    put_redis_data(process_data(get_s3_data()))
+   
 
 
 local = {
