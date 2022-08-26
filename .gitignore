@@ -159,3 +159,5 @@ cython_debug/
 
 # tmp folder genereate when run dagit
 tmp*
+
+dbt.log.*

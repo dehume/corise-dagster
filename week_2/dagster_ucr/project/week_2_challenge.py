@@ -39,8 +39,7 @@ def insert_dbt_data(context, table_name: String):
 
 @graph
 def dbt():
-    pass
-
+    dbt_test_op(dbt_run_op(insert_dbt_data(create_dbt_table())))
 
 docker = {
     "resources": {
