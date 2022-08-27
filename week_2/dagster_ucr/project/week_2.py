@@ -60,7 +60,6 @@ def process_data(stocks):
     return Aggregation(date=date, high=high_val)
 
 
-#@op(ins={"aggregation": In(dagster_type=Aggregation, description="Aggregated Stocks Values")})
 @op(
     #config_schema={"host": str, "port": int},
     required_resource_keys={"redis"},
