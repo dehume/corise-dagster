@@ -10,11 +10,18 @@ def get_s3_data():
     pass
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
-
+@op(
+    out={"aggregation": Out(dagster_type=Aggregation)},
+    description="Get the date and high of the highest high",
+)
+def process_data(stock_list):
+    highest: float = 0 # stocks cannot be lower than 0
+    date_of_highest: datetime = None 
+    for stock in stock_list:
+      if stock.high > highest:
+        highest = stock.high
+        date_of_highest = stock.date
+    return Aggregation(date=date_of_highest, high=highest)
 
 @op
 def put_redis_data():
