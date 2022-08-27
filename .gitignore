@@ -156,3 +156,7 @@ cython_debug/
 
 # Mac OS
 .DS_Store
+
+# dbt
+dbt.log
+dbt.log.legacy

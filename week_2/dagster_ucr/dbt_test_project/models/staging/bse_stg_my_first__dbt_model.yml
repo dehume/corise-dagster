@@ -1,8 +1,8 @@
 version: 2
 
 models:
-  - name: my_first_dbt_model
-    description: "A starter dbt model"
+  - name: bse_stg_my_first__dbt_model
+    description: Post-Modern SQL
     columns:
       - name: column_1
         tests:
@@ -11,12 +11,5 @@ models:
         tests:
           - not_null
       - name: column_3
-        tests:
-          - not_null
-
-  - name: my_second_dbt_model
-    description: "A starter dbt model"
-    columns:
-      - name: my_column
         tests:
           - not_null

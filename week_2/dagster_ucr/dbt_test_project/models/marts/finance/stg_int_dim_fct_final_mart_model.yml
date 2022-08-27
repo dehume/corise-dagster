@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: stg_int_dim_fct_final_mart_model
+    description: The layer below the Metrics Layer (tm).
+    columns:
+      - name: my_column
+        tests:
+          - not_null

@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: analytics
+    schema: analytics
+
+    tables:
+      - name: dbt_table
