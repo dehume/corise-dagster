@@ -1,13 +1,25 @@
 from typing import List
+from datetime import datetime
 
 from dagster import In, Nothing, Out, ResourceDefinition, graph, op
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
+    out={"stocks": Out(dagster_type=List[Stock])},
+    tags={"kind": "s3"},
+    description="Get a list of stocks from an S3 file",
+)
+def get_s3_data(context):
+    output = list()
+    s3_key = context.op_config["s3_key"]
+    for row in context.resources.s3.get_data(s3_key):
+        stock = Stock.from_list(row)
+        output.append(stock)
+    return output
 
 
 @op(
@@ -23,15 +35,19 @@ def process_data(stock_list):
         date_of_highest = stock.date
     return Aggregation(date=date_of_highest, high=highest)
 
-@op
-def put_redis_data():
-    pass
+@op(
+    required_resource_keys={"redis"},
+    description="Upload an aggregation to Redit",
+)
+def put_redis_data(context, agg):
+    name = agg.date.strftime("%Y-%m-%d")
+    value = str(agg.high)
+    context.resources.redis.put_data(name, value)
 
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    put_redis_data(process_data(get_s3_data()))
 
 
 local = {
