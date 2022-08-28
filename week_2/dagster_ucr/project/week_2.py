@@ -7,28 +7,42 @@ from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 from operator import attrgetter
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
+    out={"stocks": Out(dagster_type=List[Stock])},
+    tags={"kind": "s3"},
+    description="Get a list of stocks from an S3 file",
+)
+def get_s3_data(context):
+    stocks = list()
+    for stock in context.resources.s3.get_data(context.op_config["s3_key"]):
+        stocks.append(Stock.from_list(stock))
+    return stocks
 
 
 @op(
+    ins={"stocks": In(dagster_type=List[Stock])},
     out={"aggregation": Out(dagster_type=Aggregation)},
+    description="highest stock aggregation"
 )
 def process_data(stocks : List[Stock]) -> Aggregation:
     highest_stock = max(stocks,key=attrgetter("high"))
     return Aggregation(date=highest_stock.date, high=highest_stock.high)
 
 
+@op(
+    ins={"highest_stock": In(dagster_type=Aggregation)},
+    required_resource_keys={"redis"},
+    out=Out(dagster_type=Nothing)
+)
+def put_redis_data(context, highest_stock:Aggregation):
+     context.resources.redis.put_data(str(highest_stock.date), str(highest_stock.high))
 
-@op
-def put_redis_data():
-    pass
 
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
     put_redis_data(process_data(get_s3_data()))
 
 
