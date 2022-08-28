@@ -68,3 +68,17 @@ week_4_restart_workspace_content:
 .PHONY: week_4_restart_workspace_project
 week_4_restart_workspace_project:
 	@docker container restart $$(docker ps -aqf "name=project")
+
+
+#Ben
+.PHONY: run_shell
+run_shell:
+	poetry shell
+
+.PHONY: run_week1
+run_week1:
+	dagster job execute -c week_1/project/config.yaml -f week_1/project/week_1.py
+
+.PHONY: run_week1_dagit
+run_week1_dagit:
+	dagit -f week_1/project/week_1.py	

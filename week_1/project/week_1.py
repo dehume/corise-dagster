@@ -3,7 +3,7 @@ from concurrent.futures import process
 from datetime import datetime
 from typing import List
 
-from dagster import In, Out, job, op, usable_as_dagster_type
+from dagster import In, Out, job, op, usable_as_dagster_type, Nothing
 from pydantic import BaseModel
 
 
@@ -41,7 +41,7 @@ class Aggregation(BaseModel):
     tags={"kind": "s3"},
     description="Get a list of stocks from an S3 file",
 )
-def get_s3_data(context):
+def get_s3_data(context) -> List[Stock]:
     output = list()
     with open(context.op_config["s3_key"]) as csvfile:
         reader = csv.reader(csvfile)
@@ -51,8 +51,10 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data(stocks : List[Stock]):
+@op(
+    out={"aggregation": Out(dagster_type=Aggregation)},
+)
+def process_data(stocks : List[Stock]) -> Aggregation:
 
     highest_stock:Stock = None
     for stock in stocks:
@@ -65,13 +67,17 @@ def process_data(stocks : List[Stock]):
     return Aggregation(date=highest_stock.date, high=highest_stock.high)
 
 
-@op(ins={"highest_stock": In(dagster_type=Aggregation, description="the stock with the greatest high value")})
+@op(ins={"highest_stock": In(dagster_type=Aggregation, description="the stock with the greatest high value")}, out={"nothing": Out(dagster_type=Nothing)} )
 def put_redis_data(highest_stock):
-    return highest_stock
+    pass
 
+
+# @job()
+# def week_1_pipeline():
+#     s3_stocks = get_s3_data()
+#     highest_stock = process_data(s3_stocks)
+#     put_redis_data(highest_stock)
 
 @job()
 def week_1_pipeline():
-    s3_stocks = get_s3_data()
-    highest_stock = process_data(s3_stocks)
-    put_redis_data(highest_stock)
+    put_redis_data(process_data(get_s3_data()))
