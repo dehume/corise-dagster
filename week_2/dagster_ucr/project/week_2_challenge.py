@@ -1,7 +1,9 @@
 from random import randint
+from typing import List
 
-from dagster import In, Nothing, String, graph, op
-from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op
+from dagster import In, Nothing, Out, Output, String, graph, op
+from dagster_dbt import DbtOutput, dbt_cli_resource, dbt_run_op, dbt_test_op
+from dagster_dbt.cli import DbtCliOutput
 from dagster_ucr.resources import postgres_resource
 
 DBT_PROJECT_PATH = "/opt/dagster/dagster_home/dagster_ucr/dbt_test_project/."
@@ -37,9 +39,39 @@ def insert_dbt_data(context, table_name: String):
     context.log.info("Batch inserted")
 
 
+@op(
+    ins={"dbt_result": In(DbtCliOutput)},
+    out={'passed': Out(dagster_type=str, is_required=False),
+         'failed': Out(dagster_type=str, is_required=False)}
+)
+def run_test(context, dbt_result):
+    context.log.info(f'dbt_result as input type is {type(dbt_result)}')
+    status = dbt_result.result['results'][0]['status']
+    context.log.info(f'dbt test status is: {status}')
+    if status == "pass":
+        yield Output(status, "passed")
+    else:
+        yield Output(status, "failed")
+
+ 
+
+@op
+def sucessed_op(context,_input):
+    context.log.info("Passed")
+
+
+@op
+def failed_op(context,_input):
+    context.log.info("Failed") 
+    
+     
 @graph
 def dbt():
-    dbt_test_op(dbt_run_op(insert_dbt_data(create_dbt_table())))
+    branch_1, branch_2 = run_test(dbt_test_op(dbt_run_op(insert_dbt_data(create_dbt_table()))))
+    sucessed_op(branch_1)
+    failed_op(branch_2)
+    # run_test(dbt_test_op(dbt_run_op(insert_dbt_data(create_dbt_table()))))
+    
 
 docker = {
     "resources": {
