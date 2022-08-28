@@ -4,16 +4,21 @@ from dagster import In, Nothing, Out, ResourceDefinition, graph, op
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
+from operator import attrgetter
+
 
 @op
 def get_s3_data():
     pass
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
+@op(
+    out={"aggregation": Out(dagster_type=Aggregation)},
+)
+def process_data(stocks : List[Stock]) -> Aggregation:
+    highest_stock = max(stocks,key=attrgetter("high"))
+    return Aggregation(date=highest_stock.date, high=highest_stock.high)
+
 
 
 @op
@@ -24,7 +29,7 @@ def put_redis_data():
 @graph
 def week_2_pipeline():
     # Use your graph from week 1
-    pass
+    put_redis_data(process_data(get_s3_data()))
 
 
 local = {
