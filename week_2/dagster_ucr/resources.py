@@ -115,7 +115,7 @@ def s3_resource(context):
         "host": Field(String),
         "port": Field(Int)
     },
-    description="resource defines a Resdis client",
+    description="resource defines a Redis client",
 )
 def redis_resource(context):
     """This resource defines a Redis client"""
