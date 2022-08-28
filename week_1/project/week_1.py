@@ -6,6 +6,7 @@ from typing import List
 from dagster import In, Out, job, op, usable_as_dagster_type, Nothing
 from pydantic import BaseModel
 
+from operator import attrgetter
 
 @usable_as_dagster_type(description="Stock data")
 class Stock(BaseModel):
@@ -55,28 +56,14 @@ def get_s3_data(context) -> List[Stock]:
     out={"aggregation": Out(dagster_type=Aggregation)},
 )
 def process_data(stocks : List[Stock]) -> Aggregation:
-
-    highest_stock:Stock = None
-    for stock in stocks:
-        if highest_stock is None:
-            highest_stock = stock
-            continue
-        if stock.high > highest_stock.high:
-            highest_stock = stock
-
+    highest_stock = max(stocks,key=attrgetter("high"))
     return Aggregation(date=highest_stock.date, high=highest_stock.high)
 
 
-@op(ins={"highest_stock": In(dagster_type=Aggregation, description="the stock with the greatest high value")}, out={"nothing": Out(dagster_type=Nothing)} )
-def put_redis_data(highest_stock):
+@op(ins={"highest_stock": In(dagster_type=Aggregation, description="the stock with the greatest high value")}, out=Out(dagster_type=Nothing) )
+def put_redis_data(highest_stock) -> Nothing:
     pass
 
-
-# @job()
-# def week_1_pipeline():
-#     s3_stocks = get_s3_data()
-#     highest_stock = process_data(s3_stocks)
-#     put_redis_data(highest_stock)
 
 @job()
 def week_1_pipeline():
