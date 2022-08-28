@@ -50,7 +50,7 @@ def test_aggregation(aggregation):
 def test_get_s3_data(stock_list):
     s3_mock = MagicMock()
     s3_mock.get_data.return_value = [stock_list] * 10
-    with build_op_context(op_config={"s3_key": "data/stock.csv"}, resources={"s3": s3_mock}) as context:
+    with build_op_context(op_config={"s3_key": "week_2/data/stock.csv"}, resources={"s3": s3_mock}) as context:
         get_s3_data(context)
         assert s3_mock.get_data.called
 
@@ -68,6 +68,6 @@ def test_put_redis_data(aggregation):
 
 def test_week_2_pipeline(stock_list):
     week_2_pipeline.execute_in_process(
-        run_config={"ops": {"get_s3_data": {"config": {"s3_key": "data/stock.csv"}}}},
+        run_config={"ops": {"get_s3_data": {"config": {"s3_key": "week_2/data/stock.csv"}}}},
         resources={"s3": mock_s3_resource, "redis": ResourceDefinition.mock_resource()},
     )

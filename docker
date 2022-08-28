@@ -1,0 +1,6 @@
+  PID TTY           TIME CMD
+ 4121 ttys000    0:00.34 /bin/zsh -il
+ 4408 ttys000    0:00.89 /Users/meredith.alder/.local/pipx/venvs/poetry/bin/python /Users/meredith.alder/.local/bin/poetry shell
+62553 ttys003    0:00.00 /bin/sh
+ 4123 ttys004    0:00.00 /bin/sh
+ 4416 ttys005    0:06.63 /bin/zsh -i

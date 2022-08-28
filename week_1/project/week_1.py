@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from operator import attrgetter
 from typing import List
 
 from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
@@ -38,7 +39,7 @@ class Aggregation(BaseModel):
     config_schema={"s3_key": str},
     out={"stocks": Out(dagster_type=List[Stock])},
     tags={"kind": "s3"},
-    description="Get a list of stocks from an S3 file",
+    description="Get a list of stocks from an S3 file.",
 )
 def get_s3_data(context):
     output = list()
@@ -50,16 +51,26 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"highest_stock": Out(dagster_type=Aggregation)},
+    description="Find the stock with the highest value."
+)
+def process_data(stocks: List[Stock]):
+    find_highest: Stock = max(stocks, key=attrgetter("high"))
+    return Aggregation(date=find_highest.date, high=find_highest.high)
 
 
-@op
-def put_redis_data():
+@op(
+    ins={"highest_stock": In(dagster_type=Aggregation)},
+    description="Store the highest value stock. TODO: add logic to store stock."
+)
+def put_redis_data(highest_stock: Stock):
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    s3_data = get_s3_data()
+    stock_to_store = process_data(s3_data)
+    put_redis_data(stock_to_store)
