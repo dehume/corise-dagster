@@ -14,9 +14,7 @@ from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 )
 def get_s3_data(context):
     output = list()
-    ##s3_data = context.resources.s3.get_data(key_name=context.op_config["s3_key"])
-    #get_dagster_logger(f'Data load sample: \n {s3_data[:5]}')
-
+    
     for row in context.resources.s3.get_data(key_name=context.op_config["s3_key"]): 
         stock = Stock.from_list(row)
         output.append(stock)
