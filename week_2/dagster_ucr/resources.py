@@ -114,7 +114,8 @@ def s3_resource(context) -> S3:
     config_schema={
         "host": Field(String),
         "port": Field(Int),
-    }
+    },
+    description="A resource that connects to Redis.",
 )
 def redis_resource(context) -> Redis:
     """This resource defines a Redis client"""
