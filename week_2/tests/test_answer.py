@@ -3,14 +3,14 @@ from unittest.mock import MagicMock
 
 import pytest
 from dagster import ResourceDefinition, build_op_context
-from dagster_ucr.project.types import Aggregation, Stock
-from dagster_ucr.project.week_2 import (
+from week_2.dagster_ucr.project.types import Aggregation, Stock
+from week_2.dagster_ucr.project.week_2 import (
     get_s3_data,
     process_data,
     put_redis_data,
     week_2_pipeline,
 )
-from dagster_ucr.resources import mock_s3_resource
+from week_2.dagster_ucr.resources import mock_s3_resource
 
 
 @pytest.fixture
