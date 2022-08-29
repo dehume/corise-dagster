@@ -1,30 +1,56 @@
 from typing import List
 
-from dagster import In, Nothing, Out, ResourceDefinition, graph, op
+from dagster import In, Nothing, Out, ResourceDefinition, graph, op, get_dagster_logger
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    config_schema={"s3_key": str},
+    required_resource_keys={"s3"},
+    out={"stocks":Out(dagster_type=List[Stock])},
+    tags={"kind": "s3"},
+    description="Accesses S3 to pull a list of Stocks"
+)
+def get_s3_data(context):
+    output = list()
+    ##s3_data = context.resources.s3.get_data(key_name=context.op_config["s3_key"])
+    #get_dagster_logger(f'Data load sample: \n {s3_data[:5]}')
+
+    for row in context.resources.s3.get_data(key_name=context.op_config["s3_key"]): 
+        stock = Stock.from_list(row)
+        output.append(stock)
+    return output
+
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"aggregation": Out(dagster_type=Aggregation)},
+    description="Takes list of stocks and outputs one with highest 'high' value"
+)
+def process_data(stocks):
+    stock_choice = max(stocks, key=lambda x: x.high)
+    logger = get_dagster_logger()
+    logger.info(f'Picked top stock: {stock_choice}')
+    return Aggregation(date=stock_choice.date, high=stock_choice.high)
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
-
-
-@op
-def put_redis_data():
-    pass
+@op(
+    required_resource_keys={"redis"},
+    ins={"aggregation": In(dagster_type=Aggregation)},
+    tags={"kind": "redis"},
+    description="Upload aggregations to Redis",
+)
+def put_redis_data(context, aggregation) -> Nothing:
+    logger = get_dagster_logger()
+    logger.info(f'Writing the follow record to Redis: {aggregation}')
+    context.resources.redis.put_data(name=str(aggregation.date), value=str(aggregation.high))
 
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    stock_list = get_s3_data()
+    stock_choice = process_data(stock_list)
+    put_redis_data(stock_choice)
 
 
 local = {
