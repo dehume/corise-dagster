@@ -60,6 +60,7 @@ def process_data(stocks):
     return Aggregation(date=date, high=high_val)
 
 
+
 @op(
     #config_schema={"host": str, "port": int},
     required_resource_keys={"redis"},
@@ -67,6 +68,7 @@ def process_data(stocks):
 )
 def put_redis_data(context, aggregation):
     context.resources.redis.put_data(aggregation.date, aggregation.high)
+
 
 
 @graph
@@ -78,6 +80,7 @@ def week_2_pipeline():
 local = {
     "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
+
 
 docker = {
     "resources": {
@@ -99,11 +102,13 @@ docker = {
     "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
 
+
 local_week_2_pipeline = week_2_pipeline.to_job(
     name="local_week_2_pipeline",
     config=local,
     resource_defs={"s3": mock_s3_resource, "redis": ResourceDefinition.mock_resource()},
 )
+
 
 docker_week_2_pipeline = week_2_pipeline.to_job(
     name="docker_week_2_pipeline",

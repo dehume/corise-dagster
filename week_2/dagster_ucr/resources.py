@@ -57,6 +57,7 @@ class Redis:
         self.client.set(name, value)
 
 
+
 # Resources
 @resource(
     config_schema={
@@ -77,6 +78,7 @@ def postgres_resource(context) -> Postgres:
     )
 
 
+
 @resource
 def mock_s3_resource():
     stocks = [
@@ -89,6 +91,7 @@ def mock_s3_resource():
     s3_mock = MagicMock()
     s3_mock.get_data.return_value = stocks
     return s3_mock
+
 
 
 @resource(
@@ -108,12 +111,6 @@ def s3_resource(context) -> S3:
         secret_key = context.resource_config["secret_key"],
         endpoint_url = context.resource_config["endpoint_url"]
     )
-
-
-# @resource
-# def mock_redis_resource():
-#     redis_mock = MagicMock()
-#     redis_mock.put_data("name", "value")
 
 
 
