@@ -1,6 +1,7 @@
+# pyright: reportMissingImports=false
 from random import randint
 
-from dagster import In, Nothing, String, graph, op
+from dagster import In, Nothing, Out, Output, String, Int, graph, op
 from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op
 from dagster_ucr.resources import postgres_resource
 
@@ -37,9 +38,61 @@ def insert_dbt_data(context, table_name: String):
     context.log.info("Batch inserted")
 
 
+@op(
+    required_resource_keys={"dbt"},
+    tags={"kind": "dbt"},
+    ins={"start_after":In(Nothing)},
+    description="dbt run step"
+    )
+def dbt_run(context):
+    context.resources.dbt.run()
+
+
+@op(
+    required_resource_keys={"dbt"},
+    tags={"kind": "dbt"},
+    ins={"dbt_run": In(Nothing)},
+    out={"dbt_success": Out(dagster_type=Int, is_required=False), "dbt_failure": Out(dagster_type=Int, is_required=False)},
+    description="dbt test step"
+    )
+def dbt_test(context) -> Int:
+    test_run = context.resources.dbt.test()
+    test_result = test_run.return_code
+    if test_result == 0:
+        yield Output(test_result, "dbt_success")
+    else:
+        yield Output(test_result, "dbt_failure")
+    
+
+
+@op(
+    tags={"kind": "dbt"},
+    ins={"dbt_test_result":In(dagster_type=Int)},
+    description="dbt success"
+    )
+def dbt_success(context, dbt_test_result: int):
+    result_str = str(dbt_test_result)
+    context.log.info(f"dbt run was a success, finishing with exit code of {result_str}")
+    
+
+
+@op(
+    tags={"kind": "dbt"},
+    ins={"dbt_test_result":In(dagster_type=Int)},
+    description="dbt failure"
+    )
+def dbt_failure(context, dbt_test_result: int):
+    result_str = str(dbt_test_result)
+    context.log.info(f"dbt run was a failure, finishing with exit code of {result_str}")
+
+
 @graph
 def dbt():
-    pass
+    dbt_table = create_dbt_table()
+    dbt_data = insert_dbt_data(dbt_table)
+    test_result_1, test_result_2 = dbt_test(dbt_run(dbt_data))
+    dbt_success(test_result_1)
+    dbt_failure(test_result_2)
 
 
 docker = {

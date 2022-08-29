@@ -1,7 +1,8 @@
+# pyright: reportMissingImports=false
 from typing import List
 from operator import attrgetter
 
-from dagster import In, Nothing, Out, ResourceDefinition, graph, op
+from dagster import In, Out, ResourceDefinition, graph, op
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
@@ -42,6 +43,7 @@ def process_data(stock_list) -> Aggregation:
 def put_redis_data(context, aggregation: Aggregation):
     date = str(aggregation.date)
     high = str(aggregation.high)
+    context.log.info(f"Putting stock {date} with high of {high} into Redis")
     context.resources.redis.put_data(date, high)
 
 
