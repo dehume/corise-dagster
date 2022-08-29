@@ -2,7 +2,7 @@ from datetime import datetime
 
 from dagster import usable_as_dagster_type
 from pydantic import BaseModel
-
+from typing import List
 
 @usable_as_dagster_type(description="Stock data")
 class Stock(BaseModel):
@@ -30,3 +30,5 @@ class Stock(BaseModel):
 class Aggregation(BaseModel):
     date: datetime
     high: float
+
+Stocks = List[Stock]
