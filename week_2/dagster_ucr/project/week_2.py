@@ -1,6 +1,6 @@
 from typing import List
 
-from dagster import In, Nothing, Out, ResourceDefinition, graph, op
+from dagster import In, Nothing, Out, ResourceDefinition, graph, op, get_dagster_logger
 from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
@@ -26,13 +26,16 @@ def get_s3_data(context) -> List[Stock]:
 def process_data(stocks: List[Stock]) -> Aggregation:
     # Find the stock with the highest value
     max_stock = max(stocks, key=lambda x: x.high)
+    # Log the output
+    logger = get_dagster_logger()
+    logger.info(f"Higest stock is: {max_stock}")
     return Aggregation(date=max_stock.date, high=max_stock.high)
 
 
 @op(
     ins={"agg_max": In(dagster_type=Aggregation)},
     required_resource_keys={"redis"},
-    out=Out(Nothing),
+    out=Out(dagster_type=Nothing),
     tags={"kind": "redis"},
     description="Write to Redis"
 )
