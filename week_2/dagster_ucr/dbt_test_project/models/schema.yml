@@ -20,3 +20,5 @@ models:
       - name: my_column
         tests:
           - not_null
+          # Uncomment the section below to potentially cause some errors, triggering conditional Dagster flows
+          #- unique
