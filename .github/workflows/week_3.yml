@@ -17,3 +17,4 @@ jobs:
     uses: ./.github/workflows/week_tests.yml
     with:
       week: week_3
+      command: pytest week_3 -vv
