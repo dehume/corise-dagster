@@ -19,9 +19,7 @@ services:
   #                  Dagster
   # ----------------------------------------- #
   dagit:
-    build:
-      << : *default-build
-      target: dagit
+    image: dhume/corise-dagster:dagit
     container_name: dagit
     restart: on-failure
     environment:
@@ -41,9 +39,7 @@ services:
       - dagster_network
 
   dagster-daemon:
-    build:
-      << : *default-build
-      target: daemon
+    image: dhume/corise-dagster:daemon
     container_name: dagster-daemon
     restart: on-failure
     environment:
@@ -107,9 +103,7 @@ services:
   #                   UCR
   # ----------------------------------------- #
   dagster-ucr:
-    build:
-      << : *default-build
-      target: week_2
+    image: dhume/corise-dagster:week_2
     container_name: dagster-ucr
     restart: always
     environment:
@@ -126,11 +120,7 @@ services:
       - dagster_network
 
   content:
-    build:
-      << : *default-build
-      target: week_3_4_content
-      args:
-        COURSE_WEEK: ${COURSE_WEEK}
+    image: dhume/corise-dagster:week_3_4_content
     container_name: content
     restart: always
     environment:
@@ -147,11 +137,7 @@ services:
       - dagster_network
 
   project:
-    build:
-      << : *default-build
-      target: week_3_4_project
-      args:
-        COURSE_WEEK: ${COURSE_WEEK}
+    image: dhume/corise-dagster:week_3_4_project
     container_name: project
     restart: always
     environment:
