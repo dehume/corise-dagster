@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 import boto3
 import redis
 import sqlalchemy
-from dagster import Field, Int, String, resource
+from dagster import Field, Int, String, resource, InitResourceContext
 
 
 # Clients
@@ -91,13 +91,32 @@ def mock_s3_resource():
     return s3_mock
 
 
-@resource
-def s3_resource():
+@resource(
+    config_schema={
+        "bucket": Field(String),
+        "access_key": Field(String),
+        "secret_key": Field(String),
+        "endpoint_url": Field(String, is_required=False),
+    },
+    description="A resource for an S3 client",
+)
+def s3_resource(context: InitResourceContext):
     """This resource defines a S3 client"""
-    pass
+    return S3(
+        bucket=context.resource_config["bucket"],
+        access_key=context.resource_config["access_key"],
+        secret_key=context.resource_config["secret_key"],
+        endpoint_url=context.resource_config["endpoint_url"],
+    )
 
 
-@resource
-def redis_resource():
+@resource(
+    config_schema={
+        "host": Field(String),
+        "port": Field(Int),
+    },
+    description="A resource for a Redis client",
+)
+def redis_resource(context: InitResourceContext):
     """This resource defines a Redis client"""
-    pass
+    return Redis(host=context.resource_config["host"], port=context.resource_config["port"])
