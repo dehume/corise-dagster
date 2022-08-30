@@ -5,26 +5,43 @@ from dagster_ucr.project.types import Aggregation, Stock
 from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    config_schema={"s3_key": str},
+    out={"stocks": Out(dagster_type=List[Stock])},
+    required_resource_keys={"s3"},
+    tags={"kind": "s3"},
+    description="Get a list of stocks from an S3 file",
+)
+def get_s3_data(context):
+    output = list()
+    for row in context.resources.s3.get_data(context.op_config["s3_key"]):
+        stock = Stock.from_list(row)
+        output.append(stock)
+    return output
 
 
-@op
-def process_data():
-    # Use your op from week 1
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"aggregation": Out(dagster_type=Aggregation)},
+)
+def process_data(stocks: list) -> Aggregation:
+    result = None
+    for stock in stocks:
+        if result is None or result.high < stock.high:
+            result = Aggregation(date=stock.date, high=stock.high)
+    return result
 
 
-@op
-def put_redis_data():
-    pass
+@op(
+    required_resource_keys={"redis"},
+)
+def put_redis_data(context, aggregation: Aggregation):
+    context.resources.redis.put_data(aggregation.date.isoformat(), aggregation.high)
 
 
 @graph
 def week_2_pipeline():
-    # Use your graph from week 1
-    pass
+    put_redis_data(process_data(get_s3_data()))
 
 
 local = {
@@ -48,7 +65,7 @@ docker = {
             }
         },
     },
-    "ops": {"get_s3_data": {"config": {"s3_key": "preifx/stock.csv"}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
 
 local_week_2_pipeline = week_2_pipeline.to_job(
