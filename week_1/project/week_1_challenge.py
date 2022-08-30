@@ -1,8 +1,18 @@
 import csv
 from datetime import datetime
+from heapq import nlargest
 from typing import List
-import heapq
-from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
+
+from dagster import (
+    DynamicOut,
+    DynamicOutput,
+    In,
+    Nothing,
+    Out,
+    job,
+    op,
+    usable_as_dagster_type,
+)
 from pydantic import BaseModel
 
 
@@ -50,25 +60,16 @@ def get_s3_data(context):
     return output
 
 
-@op(
-    ins={'stocks': In(dagster_type=List[Stock])},
-    out={"aggregation": Out(dagster_type=Aggregation)},
-    description="Receives list from S3 Data and selects highest stock value"
-)
-def process_data(stocks: List[Stock]) -> Aggregation:
-    stock_high_list = [stock.high for stock in stocks]
-    highest_stock = float(heapq.nlargest(1,stock_high_list)[0])
-    highest_date = stocks[stock_high_list.index(highest_stock)].date
-    return Aggregation(date=highest_date,high=highest_stock)
+@op
+def process_data():
+    pass
 
 
-@op(description='Used to upload an aggregation to redis',
-    ins={'aggregation': In(dagster_type=Aggregation)}
-)
-def put_redis_data(aggregation: Aggregation):
+@op
+def put_redis_data():
     pass
 
 
 @job
 def week_1_pipeline():
-    put_redis_data(process_data(get_s3_data()))
+    pass

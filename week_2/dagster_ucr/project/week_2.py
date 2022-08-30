@@ -22,7 +22,7 @@ def get_s3_data(context):
 )
 def process_data(stocks: List[Stock]) -> Aggregation:
     stock_high_list = [stock.high for stock in stocks]
-    highest_stock = heapq.nlargest(1,stock_high_list)[0]
+    highest_stock = float(heapq.nlargest(1,stock_high_list)[0])
     highest_date = stocks[stock_high_list.index(highest_stock)].date
     return Aggregation(date=highest_date,high=highest_stock)
 
@@ -64,7 +64,7 @@ docker = {
             }
         },
     },
-    "ops": {"get_s3_data": {"config": {"s3_key": "preifx/stock.csv"}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
 
 local_week_2_pipeline = week_2_pipeline.to_job(
