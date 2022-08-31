@@ -122,7 +122,7 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
 local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_schedule="*/15 * * * *")
 
 
-@schedule(cron_schedule="*/5 * * * *", job=docker_week_3_pipeline)
+@schedule(cron_schedule="0 * * * *", job=docker_week_3_pipeline)
 def docker_week_3_schedule():
     request = docker_week_3_pipeline.run_request_for_partition(partition_key="1", run_key=None)
     yield request
