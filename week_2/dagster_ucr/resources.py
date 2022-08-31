@@ -83,7 +83,7 @@ def mock_s3_resource():
         ["2020/09/01", "10.0", "10", "10.0", "10.0", "10.0"],
         ["2020/09/02", "10.0", "10", "10.0", "10.0", "10.0"],
         ["2020/09/03", "10.0", "10", "10.0", "10.0", "10.0"],
-        ["2020/09/04", "10.0", "10", "10.0", "10.0", "10.0"],
+        ["2020/09/04", "10.0", "10", "10.0", "100.0", "10.0"],
         ["2020/09/05", "10.0", "10", "10.0", "10.0", "10.0"],
     ]
     s3_mock = MagicMock()
@@ -91,13 +91,58 @@ def mock_s3_resource():
     return s3_mock
 
 
-@resource
-def s3_resource():
+
+
+S3_CONFIG = {
+        "bucket": Field(
+            String,
+            description="Name of S3 bucket to use for this resource",
+        ),
+        "access_key": Field(
+            String,
+            description="The S3 access key used to authenticate to an AWS account",
+        ),
+        "secret_key": Field(
+            String,
+            description="The S3 secret key used to authenticate to an AWS account",
+        ),
+        "endpoint_url": Field(
+            String,
+            description="The endpoint URL for your S3 session",
+        )
+
+}
+
+
+REDIS_CONFIG = {
+    "host": Field(
+        String,
+        description="The host address which Redis is assigned",
+        ),
+    "port": Field(
+        Int,
+        description="The port which Redis listens on",
+
+    )
+
+}
+
+@resource(S3_CONFIG)
+def s3_resource(context) -> S3:
     """This resource defines a S3 client"""
-    pass
+    return S3(
+        bucket=context.resource_config["bucket"],
+        access_key=context.resource_config["access_key"],
+        secret_key=context.resource_config["secret_key"],
+        endpoint_url=context.resource_config["endpoint_url"]
+    )
 
 
-@resource
-def redis_resource():
+
+@resource(REDIS_CONFIG)
+def redis_resource(context) -> Redis:
     """This resource defines a Redis client"""
-    pass
+    return Redis(
+        host=context.resource_config["host"],
+        port=context.resource_config["port"]
+    )
