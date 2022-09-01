@@ -60,7 +60,6 @@ def process_data(stocks):
     return Aggregation(date=date, high=high_val)
 
 
-
 @op(
     #config_schema={"host": str, "port": int},
     required_resource_keys={"redis"},
