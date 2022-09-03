@@ -50,16 +50,23 @@ def get_s3_data(context):
     return output
 
 
-@op
-def process_data():
-    pass
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"aggregation": Out(dagster_type=Aggregation)},
+)
+def process_data(stocks: list) -> Aggregation:
+    result = None
+    for stock in stocks:
+        if result is None or result.high < stock.high:
+            result = Aggregation(date=stock.date, high=stock.high)
+    return result
 
 
 @op
-def put_redis_data():
+def put_redis_data(aggregation: Aggregation):
     pass
 
 
 @job
 def week_1_pipeline():
-    pass
+    put_redis_data(process_data(get_s3_data()))
