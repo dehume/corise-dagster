@@ -35,7 +35,7 @@ def process_data(stocks: List[Stock]) -> Aggregation:
     description="Upload an Aggregation to Redis where the whole world can see it.",
 )
 def put_redis_data(context, aggregation: Aggregation) -> Nothing:
-    context.resources.redis.put_data(aggregation.date, str(aggregation.high))
+    context.resources.redis.put_data(str(aggregation.date), str(aggregation.high))
 
 
 @graph
