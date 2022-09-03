@@ -174,7 +174,7 @@ def test_get_s3_keys(mock, boto3_return):
 def test_docker_week_3_sensor_none(mock, boto3_empty_return):
     mock.return_value.list_objects_v2.side_effect = boto3_empty_return
     result = docker_week_3_sensor(SensorEvaluationContext(None, None, None, None, None))
-    assert next(result) == SkipReason(skip_message="No new s3 files found in bucket.")
+    assert next(result) == SkipReason(skip_message="Aint found no new files there bub.")
 
 
 @patch("boto3.client")

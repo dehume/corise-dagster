@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from dagster import (
     In,
@@ -9,6 +9,7 @@ from dagster import (
     RetryPolicy,
     RunRequest,
     ScheduleDefinition,
+    SensorEvaluationContext,
     SkipReason,
     graph,
     op,
@@ -50,7 +51,7 @@ def process_data(stocks: List[Stock]) -> Optional[Aggregation]:
 
 @op(
     required_resource_keys={"redis"},
-    ins={"aggregation": Out(dagster_type=Aggregation)},
+    ins={"aggregation": In(dagster_type=Aggregation)},
     description="Upload an Aggregation to Redis where the whole world can see it.",
     tags={"kind": "redis"},
 )
@@ -69,37 +70,37 @@ local = {
     "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}},
 }
 
-
-docker = {
-    "resources": {
-        "s3": {
-            "config": {
-                "bucket": "dagster",
-                "access_key": "test",
-                "secret_key": "test",
-                "endpoint_url": "http://localstack:4566",
-            }
+def get_docker_config():
+    return {
+        "resources": {
+            "s3": {
+                "config": {
+                    "bucket": "dagster",
+                    "access_key": "test",
+                    "secret_key": "test",
+                    "endpoint_url": "http://localstack:4566",
+                }
+            },
+            "redis": {
+                "config": {
+                    "host": "redis",
+                    "port": 6379,
+                }
+            },
         },
-        "redis": {
-            "config": {
-                "host": "redis",
-                "port": 6379,
-            }
-        },
-    },
-    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}},
-}
+        "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}},
+    }
 
+docker = get_docker_config()
 
 @static_partitioned_config(
     # The assignment says set 1-10, but also says they represent month, so shouldn't
     # the keys be 1-12?
-    partition_keys=[str(i) for i in range(1,13)]
+    partition_keys=[str(i) for i in range(1,11)]
 )
-def docker_config(month):
-    config = docker.copy()
-    config["ops"] = {"get_s3_data": {"config": {"s3_key": f"prefix/stock_{month}.csv"}}},
-    return config
+def docker_config(partition_key):
+    docker["ops"] = {"get_s3_data": {"config": {"s3_key": f"prefix/stock_{partition_key}.csv"}}}
+    return docker
 
 
 local_week_3_pipeline = week_3_pipeline.to_job(
@@ -127,16 +128,19 @@ local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_sched
 docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_schedule="0 * * * *")
 
 
-@sensor
-def docker_week_3_sensor(context, prefix):
-    new_files = get_s3_keys(bucket="dagster", prefix=prefix)
+@sensor(
+    job=docker_week_3_pipeline,
+    minimum_interval_seconds=10,
+)
+def docker_week_3_sensor(context: SensorEvaluationContext) -> Optional[Union[RunRequest, SkipReason]]:
+    # It seems like this info should be retrieved from somewhere? But `context` doesn't contain it.
+    new_files = get_s3_keys(bucket="dagster", prefix="prefix", endpoint_url="http://localstack:4566")
     if len(new_files) == 0:
         yield SkipReason("Aint found no new files there bub.")
         return
-    # Don't want to change the original, so make a copy
-    config = docker_config.copy()
     for new_file in new_files:
-        config["ops"]["get_s3_data"]["config"]["s3_key"] = new_file
+        config = get_docker_config()
+        config["ops"] = {"get_s3_data": {"config": {"s3_key": new_file}}}
         yield RunRequest(
             run_key=new_file,
             run_config=config,
