@@ -1,4 +1,4 @@
-
+from datetime import datetime as dt
 from typing import List
 
 from dagster import (
@@ -22,7 +22,12 @@ from project.types import Aggregation, Stock
 
 logger = get_dagster_logger()
 
-@op
+@op(required_resource_keys={"s3"},
+    config_schema={"s3_key": str},
+    out={"stocks": Out(dagster_type=List[Stock])},
+    tags={"kind": "s3"},
+    description="Get a list of stocks from an S3 file",
+)
 def get_s3_data(context):
     output = list()
     data = context.resources.s3.get_data(context.op_config["s3_key"])
@@ -67,29 +72,7 @@ local = {
     "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}},
 }
 
-
-docker = {
-    "resources": {
-        "s3": {
-            "config": {
-                "bucket": "dagster",
-                "access_key": "test",
-                "secret_key": "test",
-                "endpoint_url": "http://host.docker.internal:4566",
-            }
-        },
-        "redis": {
-            "config": {
-                "host": "redis",
-                "port": 6379,
-            }
-        },
-    },
-    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}},
-}
-
-
-def docker_config(s3_key: str):
+def get_run_config(s3_key: str):
     return {
     "resources": {
         "s3": {
@@ -111,6 +94,17 @@ def docker_config(s3_key: str):
 }
 
 
+docker = get_run_config("prefix/stock_9.csv") 
+
+@static_partitioned_config(partition_keys=[str(num) for num in range(1, 11)])
+def docker_config(partition_key: str):
+    return {
+        **docker,
+        "ops": {"get_s3_data": {"config": {"s3_key": f"prefix/stock_{partition_key}.csv"}}},
+    }
+
+
+
 local_week_3_pipeline = week_3_pipeline.to_job(
     name="local_week_3_pipeline",
     config=local,
@@ -122,11 +116,12 @@ local_week_3_pipeline = week_3_pipeline.to_job(
 
 docker_week_3_pipeline = week_3_pipeline.to_job(
     name="docker_week_3_pipeline",
-    config=docker,
+    config=docker_config,
     resource_defs={
         "s3": s3_resource,
         "redis": redis_resource,
     },
+    op_retry_policy=RetryPolicy(max_retries=10, delay=1)
 )
 
 #This schedule should run the local_week_3_pipeline every 15 minutes.
@@ -142,9 +137,9 @@ def docker_week_3_sensor(context):
         prefix="prefix"
     )
     if not new_files:
-        yield SkipReason("No new files found on S3 bucket")
+        yield SkipReason("No new s3 files found in bucket.")
     for new_file in new_files:
         yield RunRequest(
             run_key=new_file,
-            run_config=docker_config(new_file)
+            run_config=get_run_config(new_file)
         )
