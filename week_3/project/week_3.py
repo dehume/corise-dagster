@@ -1,19 +1,6 @@
 from typing import List
 
-from dagster import (
-    In,
-    Nothing,
-    Out,
-    ResourceDefinition,
-    RetryPolicy,
-    RunRequest,
-    ScheduleDefinition,
-    SkipReason,
-    graph,
-    op,
-    sensor,
-    static_partitioned_config,
-)
+from dagster import (In,Nothing,Out,ResourceDefinition,RetryPolicy,RunRequest,ScheduleDefinition,SkipReason,graph,op,sensor,static_partitioned_config)
 from project.resources import mock_s3_resource, redis_resource, s3_resource
 from project.sensors import get_s3_keys
 from project.types import Aggregation, Stock
@@ -56,29 +43,12 @@ def put_redis_data(context, aggregation) -> Nothing:
     context.resources.redis.put_data("agg_data", str(aggregation))
 
 
-local = {
-    "ops": {
-        "get_s3_data": {
-            "config": {
-                "s3_key": "prefix/stock_9.csv"
-            }
-        }
-    },
-}
+local = {"ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}}}
+
 
 def get_docker_config(key):
     list = {"resources": {"s3": {"config": {"bucket": "dagster","access_key": "test","secret_key": "test","endpoint_url": "http://host.docker.internal:4566",}},"redis": {"config": {"host": "redis","port": 6379,}},},"ops": {"get_s3_data": {"config": {"s3_key": key}}},}
     return list
-
-# Note, the approach commented out below works, but does not meet the test criteria. It throws a
-# TypeError: unhashable type: 'dict'
-# errror
-#
-# @static_partitioned_config(partition_keys=[str(part_numb+1) for part_numb in range(10)])
-# def docker_config(partition_key: str):
-#     return {
-#         frozenset(get_docker_config(f"prefix/stock_{partition_key}.csv").items())
-#             }
 
 @static_partitioned_config(partition_keys=[str(part_numb+1) for part_numb in range(10)])
 def docker_config(partition_key: str):
@@ -142,7 +112,6 @@ docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_sch
 
 @sensor(job=docker_week_3_pipeline, minimum_interval_seconds=30)
 def docker_week_3_sensor(context):
-
     new_keys = get_s3_keys(
         bucket="dagster",
         prefix="prefix",
