@@ -40,9 +40,8 @@ def get_s3_data(context):
     ins={"the_stocks": In(dagster_type=List[Stock])},
     out={"Aggregation": Out(Aggregation)},
 )
-def process_data(context, the_stocks: List[Stock]):
+def process_data(the_stocks: List[Stock]):
     aggregation = max(the_stocks, key=lambda stock: stock.high)
-    context.log.info(f"Top Stock: {aggregation}")
     return Aggregation(date=aggregation.date, high=aggregation.high)
 
 
@@ -71,7 +70,10 @@ def get_docker_config(key):
     list = {"resources": {"s3": {"config": {"bucket": "dagster","access_key": "test","secret_key": "test","endpoint_url": "http://host.docker.internal:4566",}},"redis": {"config": {"host": "redis","port": 6379,}},},"ops": {"get_s3_data": {"config": {"s3_key": key}}},}
     return list
 
-
+# Note, the approach commented out below works, but does not meet the test criteria. It throws a
+# TypeError: unhashable type: 'dict'
+# errror
+#
 # @static_partitioned_config(partition_keys=[str(part_numb+1) for part_numb in range(10)])
 # def docker_config(partition_key: str):
 #     return {
