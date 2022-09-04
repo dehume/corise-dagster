@@ -112,6 +112,7 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
         "s3": s3_resource,
         "redis": redis_resource,
     },
+    op_retry_policy=RetryPolicy(max_retries=10, delay=1)
 )
 
 # Schedule for local: Every 15 minutes
