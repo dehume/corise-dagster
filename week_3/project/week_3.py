@@ -114,10 +114,11 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
     },
 )
 
+# Schedule for local: Every 15 minutes
+local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_schedule="*/15 * * * *")
 
-local_week_3_schedule = None  # Add your schedule
-
-docker_week_3_schedule = None  # Add your schedule
+# Schedule for docker: Start of every hour
+docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_schedule="0 * * * *")
 
 
 @sensor
