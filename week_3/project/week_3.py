@@ -92,8 +92,16 @@ docker = {
 }
 
 
-def docker_config():
-    pass
+# Create a fixed number of partitions (1-10)
+partition_keys = [str(i) for i in range(1, 11)]
+
+@static_partitioned_config(partition_keys=partition_keys)
+def docker_config(partition_key: str):
+    key = f'prefix/stock_{partition_key}.csv'
+    return {
+        "resources": {**docker["resources"]},
+        "ops": {"get_s3_data": {"config": {"s3_key": key }}}
+    }
 
 
 local_week_3_pipeline = week_3_pipeline.to_job(
