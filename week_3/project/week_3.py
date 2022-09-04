@@ -121,6 +121,33 @@ local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_sched
 docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_schedule="0 * * * *")
 
 
-@sensor
-def docker_week_3_sensor():
-    pass
+@sensor(
+    job=docker_week_3_pipeline, 
+    minimum_interval_seconds=30,
+    description="Check S3 bucket for new files every 30 seconds."
+)
+def docker_week_3_sensor(context):
+
+    # Check for new files in the S3 bucket.
+    new_files = get_s3_keys(
+        bucket="dagster", 
+        prefix="prefix", 
+        endpoint_url="http://host.docker.internal:4566"
+    )
+
+    if not new_files:
+        yield SkipReason("No new s3 files found in bucket.")
+        return
+
+    log = get_dagster_logger()
+    log.info(f"RunRequest for {new_files}")
+
+    # RunRequest for every new file.
+    for new_file in new_files:
+        yield RunRequest(
+            run_key=new_file,
+            run_config={
+                "resources": {**docker["resources"]},
+                "ops": {"get_s3_data": {"config": {"s3_key": new_file}}},
+            }
+        )
