@@ -29,13 +29,10 @@ from project.types import Aggregation, Stock
     out={"stocks": Out(dagster_type=List[Stock], description="List of Stocks")},
 )
 def get_s3_data(context: OpExecutionContext):
-    output = list()
     s3: S3 = context.resources.s3  # assinged to a variable for better typing support
     data = s3.get_data(key_name=context.op_config["s3_key"])
 
-    for row in data:
-        stock = Stock.from_list(row)
-        output.append(stock)
+    output = [Stock.from_list(row) for row in data]
     return output
 
 
@@ -131,7 +128,7 @@ def docker_week_3_schedule():
 @sensor(job=docker_week_3_pipeline, minimum_interval_seconds=30)
 def docker_week_3_sensor(context):
     new_keys = get_s3_keys(bucket="dagster", prefix="prefix", endpoint_url="http://host.docker.internal:4566")
-    if len(new_keys) == 0:
+    if not new_keys:
         yield SkipReason("No new s3 files found in bucket.")
         return
     for s3_key in new_keys:
