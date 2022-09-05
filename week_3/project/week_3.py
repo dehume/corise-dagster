@@ -115,7 +115,7 @@ local_week_3_pipeline = week_3_pipeline.to_job(
 
 docker_week_3_pipeline = week_3_pipeline.to_job(
     name="docker_week_3_pipeline",
-    config=docker_config,
+    config=docker,
     resource_defs={
         "s3": s3_resource,
         "redis": redis_resource,
