@@ -89,3 +89,4 @@ def redis_resource(context) -> Redis:
         host=context.resource_config["host"],
         port=context.resource_config["port"],
     )
+
