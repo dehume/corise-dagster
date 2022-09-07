@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: postgresql
+    database: postgresql
+    schema: analytics
+    tables:
+      - name: dbt_table
