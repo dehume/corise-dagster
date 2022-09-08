@@ -91,9 +91,8 @@ docker = {
 }
 
 
-@static_partitioned_config(partition_keys=[str(i) for i in range(1,11)])
+@static_partitioned_config(partition_keys=list((map(str, range(1,11)))))
 def docker_config(partition_key: str):
-
     return {
         "resources": {
             "s3": {
@@ -101,7 +100,7 @@ def docker_config(partition_key: str):
                     "bucket": "dagster",
                     "access_key": "test",
                     "secret_key": "test",
-                    "endpoint_url": "http://host.docker.internal:4566",
+                    "endpoint_url": "http://localstack:4566",
                 }
             },
             "redis": {
