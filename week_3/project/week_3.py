@@ -71,16 +71,17 @@ local = {
     "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}},
 }
 
+
 def config_setup(config_key: str):
     docker = {
         "resources": {
-            "s3": {
-                "config": {
-                    "bucket": "dagster",
-                    "access_key": "test",
-                    "secret_key": "test",
-                    "endpoint_url": "http://host.docker.internal:4566",
-                }
+          "s3": {
+              "config": {
+                  "bucket": "dagster",
+                  "access_key": "test",
+                 "secret_key": "test",
+                  "endpoint_url": "http://localstack:4566",
+              }
             },
             "redis": {
                 "config": {
