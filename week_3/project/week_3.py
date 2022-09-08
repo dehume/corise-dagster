@@ -91,8 +91,28 @@ docker = {
 }
 
 
-def docker_config():
-    pass
+@static_partitioned_config(partition_keys=[str(i) for i in range(1,11)])
+def docker_config(partition_key: str):
+
+    return {
+        "resources": {
+            "s3": {
+                "config": {
+                    "bucket": "dagster",
+                    "access_key": "test",
+                    "secret_key": "test",
+                    "endpoint_url": "http://host.docker.internal:4566",
+                }
+            },
+            "redis": {
+                "config": {
+                    "host": "redis",
+                    "port": 6379,
+                }
+            },
+        },
+        "ops": {"get_s3_data": {"config": {"s3_key": f"prefix/stock_{partition_key}.csv"}}},
+    }
 
 
 local_week_3_pipeline = week_3_pipeline.to_job(
@@ -111,14 +131,55 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
         "s3": s3_resource,
         "redis": redis_resource,
     },
+    op_retry_policy=RetryPolicy(max_retries=10, delay=1),
+
 )
 
 
-local_week_3_schedule = None  # Add your schedule
+local_week_3_schedule = ScheduleDefinition(
+    job=local_week_3_pipeline,
+    cron_schedule="*/15 * * * *",  # every 15 minutes
+)
 
-docker_week_3_schedule = None  # Add your schedule
+docker_week_3_schedule = ScheduleDefinition(
+    job=docker_week_3_pipeline,
+    cron_schedule="0 * * * *",  # every hour
+)
 
 
-@sensor
-def docker_week_3_sensor():
-    pass
+@sensor(job=docker_week_3_pipeline, minimum_interval_seconds=30)
+def docker_week_3_sensor(context):
+    new_keys = get_s3_keys(
+        bucket="dagster",
+        prefix="prefix",
+        endpoint_url="http://host.docker.internal:4566",
+        since_key= None
+    )
+
+    if not new_keys:
+        yield SkipReason("No new s3 files found in bucket.")
+        return
+
+    for new_key in new_keys:
+        yield RunRequest(
+            run_key=new_key,
+            run_config={
+                "resources": {
+                    "s3": {
+                        "config": {
+                            "bucket": "dagster",
+                            "access_key": "test",
+                            "secret_key": "test",
+                            "endpoint_url": "http://host.docker.internal:4566",
+                        }
+                    },
+                    "redis": {
+                        "config": {
+                            "host": "redis",
+                            "port": 6379,
+                        }
+                    },
+                },
+                "ops": {"get_s3_data": {"config": {"s3_key": new_key}}},
+            }
+        )
