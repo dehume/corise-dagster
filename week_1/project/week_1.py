@@ -59,7 +59,6 @@ def process_data(stocks):
             agg = Aggregation(date=stock.date, high=highest)
     return agg
 
-
 @op(ins={"aggregation": In(dagster_type=Aggregation)},
     out=Out(dagster_type=Nothing),
     description='upload aggregated data to Redis')
