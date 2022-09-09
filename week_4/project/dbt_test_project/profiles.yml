@@ -1,0 +1,12 @@
+test_dbt:
+  target: test
+  outputs:
+    test:
+      type: postgres
+      host: postgresql
+      user: postgres_user
+      password: postgres_password
+      port: 5432
+      dbname: postgres_db
+      schema: analytics
+      threads: 4
