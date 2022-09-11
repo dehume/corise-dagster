@@ -1,5 +1,3 @@
-from typing import List
-
 from dagster import Nothing, asset, with_resources
 from project.resources import redis_resource, s3_resource
 from project.types import Aggregation, Stock
@@ -7,9 +5,7 @@ from project.types import Aggregation, Stock
 
 @asset(
     config_schema={"s3_key": str},
-    # out={"the_stocks": Out(dagster_type=List[Stock])},
     required_resource_keys={'s3'},
-    # tags={"kind": "s3"},
     description="List of Stocks",
     group_name="corise"
 )
@@ -24,8 +20,6 @@ def get_s3_data(context):
 
 @asset(
     description="Return Aggregation from stock list with the greatest `high` value",
-    # ins={"the_stocks": In(dagster_type=List[Stock])},
-    # out={"Aggregation": Out(Aggregation)},
     group_name='corise'
 )
 def process_data(get_s3_data):
@@ -35,10 +29,7 @@ def process_data(get_s3_data):
 
 @asset(
     description="Upload to Redis",
-    # ins={"aggregation": In(dagster_type=Aggregation)},
-    # out=Out(Nothing),
     required_resource_keys={"redis"},
-    # tags={"kind": "redis"},
     group_name="corise"
 )
 def put_redis_data(context, process_data) -> Nothing:
