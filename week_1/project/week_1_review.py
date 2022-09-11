@@ -1,5 +1,3 @@
-# CoRise Dagster Course assignment #1
-
 import csv
 from datetime import datetime
 from typing import List
@@ -7,9 +5,7 @@ from typing import List
 from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
 from pydantic import BaseModel
 
-from operator import attrgetter
 
-# Create new Type 'Stock'
 @usable_as_dagster_type(description="Stock data")
 class Stock(BaseModel):
     date: datetime
@@ -31,7 +27,7 @@ class Stock(BaseModel):
             low=float(input_list[5]),
         )
 
-# Create new Type 'Aggregation'
+
 @usable_as_dagster_type(description="Aggregation of stock data")
 class Aggregation(BaseModel):
     date: datetime
@@ -54,27 +50,16 @@ def get_s3_data(context):
     return output
 
 
-@op (
-    ins={"StockList": In(dagster_type=List[Stock])},
-    out={"Aggregation": Out(dagster_type=Aggregation)},
-    description="get highest stock"
-)
-def process_data(StockList):
-    hi_stock : Stock = max(StockList, key=attrgetter("high"))
-    stock_agg = Aggregation(date=hi_stock.date, high=hi_stock.high)
-    return stock_agg
+@op
+def process_data():
+    pass
 
 
-@op(
-    ins={"agg": In(dagster_type=Aggregation)},
-    tags={"kind": "redis"},
-    description="Save to Redis - pass for now",
-)
-def put_redis_data(agg: Aggregation):
+@op
+def put_redis_data():
     pass
 
 
 @job
 def week_1_pipeline():
-    s3_fetch = process_data(get_s3_data())
-    put_redis_data(s3_fetch)
+    pass
