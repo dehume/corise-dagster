@@ -99,7 +99,7 @@ partition_keys = [str(i) for i in range(1, 11)]
 def docker_config(partition_key: str):
     key = f'prefix/stock_{partition_key}.csv'
     return {
-        "resources": {**docker["resources"]},
+        **docker,
         "ops": {"get_s3_data": {"config": {"s3_key": key }}}
     }
 
