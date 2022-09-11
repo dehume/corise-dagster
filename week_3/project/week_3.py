@@ -36,7 +36,6 @@ def get_s3_data(context):
         output.append(stock)
     return output 
 
-
 @op(
     out={"max_value": Out(dagster_type=Aggregation)},
     description="Filter for largest daily high stock value"
@@ -125,9 +124,9 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
 )
 
 
-local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_schedule="*/15 * * * *")  # Add your schedule
+local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_schedule="*/15 * * * *")  
 
-docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_schedule="0 * * * *")  # Add your schedule
+docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_schedule="0 * * * *")  
 
 
 @sensor(job=docker_week_3_pipeline)
