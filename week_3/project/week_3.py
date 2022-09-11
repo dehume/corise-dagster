@@ -127,7 +127,16 @@ docker_week_3_pipeline = week_3_pipeline.to_job(
 local_week_3_schedule = ScheduleDefinition(job=local_week_3_pipeline, cron_schedule="*/15 * * * *")
 
 # Schedule for docker: Start of every hour
-docker_week_3_schedule = ScheduleDefinition(job=docker_week_3_pipeline, cron_schedule="0 * * * *")
+@schedule(
+    cron_schedule="0 * * * *", 
+    job=docker_week_3_pipeline,
+    tags={"kind": "schedule"},
+    description="Run scheduled for the start of every hour"
+)
+def docker_week_3_schedule():
+    for partition_key in partition_keys:
+        request = docker_week_3_pipeline.run_request_for_partition(partition_key=partition_key, run_key=partition_key)
+        yield request
 
 
 @sensor(
