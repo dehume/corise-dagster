@@ -12,14 +12,17 @@ from dagster_ucr.resources import mock_s3_resource, redis_resource, s3_resource
 )
 def get_s3_data(context):
     output = list()
-    data = context.resources.s3.get_data(context.op_config['s3_key'])
+    data = context.resources.s3.get_data(context.op_config["s3_key"])
     for row in data:
         output.append(Stock.from_list(row))
     return output
 
-@op(ins={"stocks": In(dagster_type=List[Stock])},
-    out={'aggregation': Out(dagster_type=Aggregation)},
-    description="Given a list of stocks return the Aggregated values")
+
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"aggregation": Out(dagster_type=Aggregation)},
+    description="Given a list of stocks return the Aggregated values",
+)
 def process_data(stocks):
     highest = max([stock.high for stock in stocks])
     for stock in stocks:
@@ -28,10 +31,12 @@ def process_data(stocks):
     return agg
 
 
-@op(ins={"aggregation": In(dagster_type=Aggregation)},
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation)},
     out=Out(dagster_type=Nothing),
     required_resource_keys={"redis"},
-    description='upload aggregated data to Redis')
+    description="upload aggregated data to Redis",
+)
 def put_redis_data(context, aggregation):
     context.resources.redis.put_data(str(aggregation.date), str(aggregation.high))
 

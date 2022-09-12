@@ -93,31 +93,23 @@ def mock_s3_resource():
 
 @resource(
     config_schema={
-        "bucket": Field(String), 
-        "access_key": Field(String), 
-        "secret_key": Field(String), 
-        "endpoint_url": Field(String), 
+        "bucket": Field(String),
+        "access_key": Field(String),
+        "secret_key": Field(String),
+        "endpoint_url": Field(String),
     }
 )
 def s3_resource(context):
     """This resource defines a S3 client"""
     return S3(
-        bucket=context.resource_config['bucket'],
-        access_key=context.resource_config['access_key'],
-        secret_key=context.resource_config['secret_key'],
-        endpoint_url=context.resource_config['endpoint_url'],
+        bucket=context.resource_config["bucket"],
+        access_key=context.resource_config["access_key"],
+        secret_key=context.resource_config["secret_key"],
+        endpoint_url=context.resource_config["endpoint_url"],
     )
 
 
-@resource(
-    config_schema={
-        "host": Field(String),
-        "port": Field(Int)
-    }
-)
+@resource(config_schema={"host": Field(String), "port": Field(Int)})
 def redis_resource(context):
     """This resource defines a Redis client"""
-    return Redis(
-        host=context.resource_config['host'],
-        port=context.resource_config['port']
-    )
+    return Redis(host=context.resource_config["host"], port=context.resource_config["port"])

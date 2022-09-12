@@ -49,9 +49,12 @@ def get_s3_data(context):
             output.append(stock)
     return output
 
-@op(ins={"stocks": In(dagster_type=List[Stock])},
-    out={'aggregation': Out(dagster_type=Aggregation)},
-    description="Given a list of stocks return the Aggregated values")
+
+@op(
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"aggregation": Out(dagster_type=Aggregation)},
+    description="Given a list of stocks return the Aggregated values",
+)
 def process_data(stocks):
     highest = max([stock.high for stock in stocks])
     for stock in stocks:
@@ -59,9 +62,12 @@ def process_data(stocks):
             agg = Aggregation(date=stock.date, high=highest)
     return agg
 
-@op(ins={"aggregation": In(dagster_type=Aggregation)},
+
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation)},
     out=Out(dagster_type=Nothing),
-    description='upload aggregated data to Redis')
+    description="upload aggregated data to Redis",
+)
 def put_redis_data(aggregation):
     pass
 
