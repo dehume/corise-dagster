@@ -117,6 +117,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv-corise-dagster
 env/
 venv/
 ENV/
@@ -156,3 +157,6 @@ cython_debug/
 
 # Mac OS
 .DS_Store
+
+# Pycharm
+.idea
