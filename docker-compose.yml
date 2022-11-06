@@ -13,6 +13,23 @@ x-app-vars:
   DAGSTER_POSTGRES_USER: "postgres_user"
   DAGSTER_POSTGRES_PASSWORD: "postgres_password"
 
+x-ucr-service:
+  &default-ucr-service
+  restart: always
+  environment:
+    << : *default-app-vars
+    AWS_ACCESS_KEY_ID: test
+    AWS_SECRET_ACCESS_KEY: test
+  depends_on:
+    - localstack
+  profiles:
+    - dagster
+  volumes:
+    - ./${COURSE_WEEK}/workspaces:/opt/dagster/dagster_home/workspaces
+    - ./dbt_test_project:/opt/dagster/dagster_home/dbt_test_project
+  networks:
+    - dagster_network
+
 services:
 
   # ----------------------------------------- #
@@ -106,66 +123,32 @@ services:
   # ----------------------------------------- #
   #                   UCR
   # ----------------------------------------- #
-  dagster-ucr:
-    build:
-      << : *default-build
-      target: week_2
-    container_name: dagster-ucr
-    restart: always
-    environment:
-      << : *default-app-vars
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
-    depends_on:
-      - localstack
-    volumes:
-      - ./${COURSE_WEEK}/dagster_ucr:/opt/dagster/dagster_home/dagster_ucr
-    profiles:
-      - week_2
-    networks:
-      - dagster_network
-
   content:
+    << : *default-ucr-service
     build:
       << : *default-build
-      target: week_3_4_content
+      target: content
       args:
         COURSE_WEEK: ${COURSE_WEEK}
     container_name: content
-    restart: always
-    environment:
-      << : *default-app-vars
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
-    depends_on:
-      - localstack
-    volumes:
-      - ./${COURSE_WEEK}/content:/opt/dagster/dagster_home/content
-    profiles:
-      - week_3_4
-    networks:
-      - dagster_network
 
   project:
+    << : *default-ucr-service
     build:
       << : *default-build
-      target: week_3_4_project
+      target: project
       args:
         COURSE_WEEK: ${COURSE_WEEK}
     container_name: project
-    restart: always
-    environment:
-      << : *default-app-vars
-      AWS_ACCESS_KEY_ID: test
-      AWS_SECRET_ACCESS_KEY: test
-    depends_on:
-      - localstack
-    volumes:
-      - ./${COURSE_WEEK}/project:/opt/dagster/dagster_home/project
-    profiles:
-      - week_3_4
-    networks:
-      - dagster_network
+
+  challenge:
+    << : *default-ucr-service
+    build:
+      << : *default-build
+      target: challenge
+      args:
+        COURSE_WEEK: ${COURSE_WEEK}
+    container_name: challenge
 
 networks:
   dagster_network:

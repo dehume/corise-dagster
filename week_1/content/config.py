@@ -7,14 +7,14 @@ def get_name(context) -> str:
 
 
 @op
-def hello(name: str):
-    print(f"Hello, {name}!")
+def hello(context, name: String):
+    context.log.info(f"Hello, {name}!")
 
 
 # @op(config_schema={"location": String})
-# def hello(context, name: str):
+# def hello(context, name: String):
 #     location = context.op_config["location"]
-#     print(f"Hello, {name}! How is {location}?")
+#     context.log.info(f"Hello, {name}! How is {location}?")
 
 
 @graph

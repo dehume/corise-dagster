@@ -2,18 +2,18 @@ from dagster import graph, op
 
 
 @op
-def get_name() -> str:
+def get_name():
     return "dagster"
 
 
 # @op
-# def capitalize_name(name: str) -> str:
+# def capitalize_name(name):
 #     return name.capitalize()
 
 
 @op
-def hello(name: str):
-    print(f"Hello, {name}!")
+def hello(context, name):
+    context.log.info(f"Hello, {name}!")
 
 
 @graph

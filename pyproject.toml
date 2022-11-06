@@ -1,17 +1,17 @@
 [tool.poetry]
 name = "corise-dagster"
-version = "0.1.0"
-description = "co:rise Dagster."
+version = "0.2.0"
+description = "CoRise Dagster."
 authors = ["Dennis Hume <hume.dennis@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "<3.10,>=3.8.0"
-dagster = "0.15.0"
-dagster-postgres = "0.15.0"
-dagster-docker = "0.15.0"
-dagster-dbt = "0.15.0"
-dagit = "0.15.0"
+python = "<=3.10,>=3.8.0"
+dagster = "1.0.8"
+dagit = "1.0.8"
+dagster-postgres = "0.16.8"
+dagster-docker = "0.16.8"
+dagster-dbt = "0.16.8"
 dbt-postgres = "1.1.0"
 pydantic = "^1.9.0"
 redis = "^4.0.0"

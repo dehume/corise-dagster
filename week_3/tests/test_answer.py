@@ -10,21 +10,21 @@ from dagster import (
     SkipReason,
     build_op_context,
 )
-from project.resources import mock_s3_resource
-from project.sensors import get_s3_keys
-from project.types import Aggregation, Stock
-from project.week_3 import (
+from workspaces.project.sensors import get_s3_keys
+from workspaces.project.week_3 import (
     docker_config,
-    docker_week_3_pipeline,
-    docker_week_3_schedule,
-    docker_week_3_sensor,
     get_s3_data,
-    local_week_3_pipeline,
-    local_week_3_schedule,
     process_data,
     put_redis_data,
     week_3_pipeline,
+    week_3_pipeline_docker,
+    week_3_pipeline_local,
+    week_3_schedule_docker,
+    week_3_schedule_local,
+    week_3_sensor_docker,
 )
+from workspaces.resources import mock_s3_resource
+from workspaces.types import Aggregation, Stock
 
 
 @pytest.fixture
@@ -140,18 +140,18 @@ def test_week_3_pipeline():
     )
 
 
-def test_docker_week_3_pipeline():
-    assert docker_week_3_pipeline._solid_retry_policy == RetryPolicy(max_retries=10, delay=1)
+def test_week_3_pipeline_docker():
+    assert week_3_pipeline_docker._solid_retry_policy == RetryPolicy(max_retries=10, delay=1)
 
 
-def test_local_week_3_schedule():
-    assert local_week_3_schedule.job == local_week_3_pipeline
-    assert local_week_3_schedule.cron_schedule == "*/15 * * * *"
+def test_week_3_schedule_local():
+    assert week_3_schedule_local.job == week_3_pipeline_local
+    assert week_3_schedule_local.cron_schedule == "*/15 * * * *"
 
 
-def test_docker_week_3_schedule():
-    assert docker_week_3_schedule.job == docker_week_3_pipeline
-    assert docker_week_3_schedule.cron_schedule == "0 * * * *"
+def test_week_3_schedule_docker():
+    assert week_3_schedule_docker.job == week_3_pipeline_docker
+    assert week_3_schedule_docker.cron_schedule == "0 * * * *"
 
 
 @patch("boto3.client")
@@ -171,16 +171,16 @@ def test_get_s3_keys(mock, boto3_return):
 
 
 @patch("boto3.client")
-def test_docker_week_3_sensor_none(mock, boto3_empty_return):
+def test_week_3_sensor_docker_none(mock, boto3_empty_return):
     mock.return_value.list_objects_v2.side_effect = boto3_empty_return
-    result = docker_week_3_sensor(SensorEvaluationContext(None, None, None, None, None))
+    result = week_3_sensor_docker(SensorEvaluationContext(None, None, None, None, None))
     assert next(result) == SkipReason(skip_message="No new s3 files found in bucket.")
 
 
 @patch("boto3.client")
-def test_docker_week_3_sensor_keys(mock, resource_config, boto3_return):
+def test_week_3_sensor_docker_keys(mock, resource_config, boto3_return):
     mock.return_value.list_objects_v2.side_effect = boto3_return
-    result = docker_week_3_sensor(SensorEvaluationContext(None, None, None, None, None))
+    result = week_3_sensor_docker(SensorEvaluationContext(None, None, None, None, None))
     assert next(result) == RunRequest(
         run_key="key_1",
         run_config={
