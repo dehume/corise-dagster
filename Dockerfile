@@ -66,29 +66,28 @@ FROM runner AS daemon
 CMD ["dagster-daemon", "run"]
 
 # ----------------------------------------- #
-#       User Code Repository Week 2
+#            User Code Repository
 # ----------------------------------------- #
-FROM runner AS week_2
-COPY week_2/dagster_ucr/ ./dagster_ucr
-USER dagster:dagster
-EXPOSE 4000
-CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "dagster_ucr/repo.py"]
-
-# ----------------------------------------- #
-#       User Code Repository Week 3/4
-# ----------------------------------------- #
-FROM runner AS week_3_4_content
+FROM runner AS content
 ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_content
 ARG COURSE_WEEK
-COPY ${COURSE_WEEK}/content/ ./content
+COPY ${COURSE_WEEK}/workspaces/ ./workspaces
 USER dagster:dagster
 EXPOSE 4000
-CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "content/repo.py"]
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "workspaces/content/repo.py"]
 
-FROM runner AS week_3_4_project
+FROM runner AS project
 ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_project
 ARG COURSE_WEEK
-COPY ${COURSE_WEEK}/project/ ./project
+COPY ${COURSE_WEEK}/workspaces/ ./workspaces
 USER dagster:dagster
 EXPOSE 4001
-CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4001", "-f", "project/repo.py"]
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4001", "-f", "workspaces/project/repo.py"]
+
+FROM runner AS challenge
+ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_challenge
+ARG COURSE_WEEK
+COPY ${COURSE_WEEK}/workspaces/ ./workspaces
+USER dagster:dagster
+EXPOSE 4002
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4002", "-f", "workspaces/challenge/repo.py"]

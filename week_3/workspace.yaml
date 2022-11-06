@@ -3,8 +3,12 @@ load_from:
   - grpc_server:
       host: content
       port: 4000
-      location_name: "content"
+      location_name: content
   - grpc_server:
       host: project
       port: 4001
-      location_name: "project"
+      location_name: project
+  - grpc_server:
+      host: challenge
+      port: 4002
+      location_name: challenge

@@ -3,8 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from dagster import AssetKey, build_op_context
-from project.types import Aggregation, Stock
-from project.week_4 import (
+from workspaces.project.week_4 import (
     get_s3_data,
     get_s3_data_docker,
     process_data,
@@ -12,6 +11,7 @@ from project.week_4 import (
     put_redis_data,
     put_redis_data_docker,
 )
+from workspaces.types import Aggregation, Stock
 
 
 @pytest.fixture

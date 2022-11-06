@@ -23,48 +23,42 @@ week_4_tests:
 # Week 2
 .PHONY: week_2_start
 week_2_start:
-	@docker compose --env-file=week_2/.course_week --profile dagster --profile week_2 up -d --build
+	@docker compose --env-file=week_2/.course_week --profile dagster up -d --build
 
 .PHONY: week_2_down
 week_2_down:
-	@docker compose --env-file=week_2/.course_week --profile dagster --profile week_2 down --remove-orphans
-
-.PHONY: week_2_restart_workspace
-week_2_restart_workspace:
-	@docker container restart $$(docker ps -aqf "name=ucr")
+	@docker compose --env-file=week_2/.course_week --profile dagster down --remove-orphans
 
 
 # Week 3
 .PHONY: week_3_start
 week_3_start:
-	@docker compose --env-file=week_3/.course_week --profile dagster --profile week_3_4 up -d --build
+	@docker compose --env-file=week_3/.course_week --profile dagster up -d --build
 
 .PHONY: week_3_down
 week_3_down:
-	@docker compose --env-file=week_3/.course_week --profile dagster --profile week_3_4 down --remove-orphans
-
-.PHONY: week_3_restart_workspace_content
-week_3_restart_workspace_content:
-	@docker container restart $$(docker ps -aqf "name=content")
-
-.PHONY: week_3_restart_workspace_project
-week_3_restart_workspace_project:
-	@docker container restart $$(docker ps -aqf "name=project")
+	@docker compose --env-file=week_3/.course_week --profile dagster down --remove-orphans
 
 
 # Week 4
 .PHONY: week_4_start
 week_4_start:
-	@docker compose --env-file=week_4/.course_week --profile dagster --profile week_3_4 up -d --build
+	@docker compose --env-file=week_4/.course_week --profile dagster up -d --build
 
 .PHONY: week_4_down
 week_4_down:
-	@docker compose --env-file=week_4/.course_week --profile dagster --profile week_3_4 down --remove-orphans
+	@docker compose --env-file=week_4/.course_week --profile dagster down --remove-orphans
 
-.PHONY: week_4_restart_workspace_content
-week_4_restart_workspace_content:
+
+# Restart UCRs
+.PHONY: restart_content
+restart_content:
 	@docker container restart $$(docker ps -aqf "name=content")
 
-.PHONY: week_4_restart_workspace_project
-week_4_restart_workspace_project:
+.PHONY: restart_project
+restart_project:
 	@docker container restart $$(docker ps -aqf "name=project")
+
+.PHONY: restart_challenge
+restart_challenge:
+	@docker container restart $$(docker ps -aqf "name=challenge")

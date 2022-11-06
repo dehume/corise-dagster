@@ -1,8 +1,8 @@
 import csv
 from datetime import datetime
-from typing import List
+from typing import Iterator, List
 
-from dagster import In, Nothing, Out, job, op, usable_as_dagster_type
+from dagster import In, Nothing, Out, String, job, op, usable_as_dagster_type
 from pydantic import BaseModel
 
 
@@ -16,7 +16,7 @@ class Stock(BaseModel):
     low: float
 
     @classmethod
-    def from_list(cls, input_list: list):
+    def from_list(cls, input_list: List[List]):
         """Do not worry about this class method for now"""
         return cls(
             date=datetime.strptime(input_list[0], "%Y/%m/%d"),
@@ -34,20 +34,16 @@ class Aggregation(BaseModel):
     high: float
 
 
-@op(
-    config_schema={"s3_key": str},
-    out={"stocks": Out(dagster_type=List[Stock])},
-    tags={"kind": "s3"},
-    description="Get a list of stocks from an S3 file",
-)
-def get_s3_data(context):
-    output = list()
-    with open(context.op_config["s3_key"]) as csvfile:
+def csv_helper(file_name: str) -> Iterator[Stock]:
+    with open(file_name) as csvfile:
         reader = csv.reader(csvfile)
         for row in reader:
-            stock = Stock.from_list(row)
-            output.append(stock)
-    return output
+            yield Stock.from_list(row)
+
+
+@op
+def get_s3_data():
+    pass
 
 
 @op

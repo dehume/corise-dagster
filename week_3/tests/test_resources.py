@@ -1,5 +1,5 @@
 from dagster import build_init_resource_context
-from project.resources import S3, Redis, redis_resource, s3_resource
+from workspaces.resources import S3, Redis, redis_resource, s3_resource
 
 
 def test_s3_resource():

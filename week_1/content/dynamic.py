@@ -1,21 +1,21 @@
-from email.policy import strict
+from typing import List
 
-from dagster import DynamicOut, DynamicOutput, graph, op
+from dagster import DynamicOut, DynamicOutput, String, graph, op
 
 # @op
-# def get_name() -> list:
+# def get_name() -> List[String]:
 #     return ["dagster", "mike", "molly"]
 
 
 # @op
-# def capitalize_name(names: list) -> list:
+# def capitalize_name(names: List[String]) -> List[String]:
 #     return [name.capitalize() for name in names]
 
 
 # @op
-# def hello(names: list):
+# def hello(context, names: List[String]):
 #     for name in names:
-#         print(f"Hello, {name}!")
+#         context.log.info(f"Hello, {name}!")
 
 
 # @graph
@@ -24,20 +24,20 @@ from dagster import DynamicOut, DynamicOutput, graph, op
 
 
 @op(out=DynamicOut())
-def get_name() -> str:
+def get_name() -> String:
     for name in ["dagster", "mike", "molly"]:
         yield DynamicOutput(name, mapping_key=name)
 
 
 @op
-def capitalize_name(name: str) -> str:
+def capitalize_name(name: String) -> String:
     return name.capitalize()
 
 
 @op
-def hello(names: list):
+def hello(context, names: List[String]):
     for name in names:
-        print(f"Hello, {name}!")
+        context.log.info(f"Hello, {name}!")
 
 
 @graph

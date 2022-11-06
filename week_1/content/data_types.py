@@ -19,14 +19,18 @@ class PydanticDagName(BaseModel):
         return value
 
 
-@op(out={"name": Out(dagster_type=String, description="The generated name")})
+@op(
+    out={"name": Out(dagster_type=String, description="The generated name")},
+)
 def get_name():
     return "dagster"
 
 
-@op(ins={"name": In(dagster_type=DagName, description="Generated dag name")})
-def hello(name):
-    print(f"Hello, {name}!")
+@op(
+    ins={"name": In(dagster_type=DagName, description="Generated dag name")},
+)
+def hello(context, name):
+    context.log.info(f"Hello, {name}!")
 
 
 @graph
