@@ -1,7 +1,7 @@
 import datetime
 
 import pytest
-from challenge.week_1_challenge import empty_stock_notifiy, week_1_challenge
+from challenge.week_1_challenge import empty_stock_notify, week_1_challenge
 from dagster import build_op_context
 from project.week_1 import (
     Aggregation,
@@ -96,9 +96,9 @@ def test_job(file_path):
 
 
 @pytest.mark.challenge
-def test_empty_stock_notifiy():
+def test_empty_stock_notify():
     with build_op_context() as context:
-        empty_stock_notifiy(context, aggregation)
+        empty_stock_notify(context, aggregation)
 
 
 @pytest.mark.challenge
@@ -129,4 +129,4 @@ def test_job_challenge_empty(empty_file_path):
     )
     assert result.success
     assert result.output_for_node("get_s3_data", "empty_stocks") is None
-    assert result.output_for_node("empty_stock_notifiy") is None
+    assert result.output_for_node("empty_stock_notify") is None

@@ -74,7 +74,7 @@ def put_redis_data():
     ins={"empty_stocks": In(dagster_type=Any)},
     description="Notifiy if stock list is empty",
 )
-def empty_stock_notifiy(context, empty_stocks) -> Nothing:
+def empty_stock_notify(context, empty_stocks) -> Nothing:
     context.log.info("No stocks returned")
 
 
