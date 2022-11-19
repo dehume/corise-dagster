@@ -20,4 +20,9 @@ def put_redis_data():
     pass
 
 
-get_s3_data_docker, process_data_docker, put_redis_data_docker = with_resources()
+@asset
+def put_s3_data():
+    pass
+
+
+get_s3_data_docker, process_data_docker, put_redis_data_docker, put_s3_data_docker = with_resources()

@@ -4,7 +4,7 @@ from dagster import In, Nothing, String, graph, op
 from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op
 from workspaces.resources import postgres_resource
 
-DBT_PROJECT_PATH = "/opt/dagster/dagster_home/dagster_ucr/dbt_test_project/."
+DBT_PROJECT_PATH = "/opt/dagster/dagster_home/dbt_test_project/."
 
 
 @op(
