@@ -35,6 +35,11 @@ def put_redis_data():
     pass
 
 
+@op
+def put_s3_data():
+    pass
+
+
 @graph
 def week_3_pipeline():
     pass

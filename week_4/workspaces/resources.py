@@ -1,4 +1,5 @@
 import csv
+import json
 from typing import Iterator
 from unittest.mock import MagicMock
 
@@ -6,6 +7,7 @@ import boto3
 import redis
 import sqlalchemy
 from dagster import Field, Int, String, resource
+from workspaces.types import Aggregation
 
 
 class Postgres:
@@ -46,6 +48,13 @@ class S3:
         data = obj["Body"].read().decode("utf-8").split("\n")
         for record in csv.reader(data):
             yield record
+
+    def put_data(self, key_name: str, data: Aggregation):
+        self.client.put_object(
+            Bucket=self.bucket,
+            Key=key_name,
+            Body=json.dumps(data.dict(), default=str),
+        )
 
 
 class Redis:
