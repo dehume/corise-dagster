@@ -51,7 +51,10 @@ def get_s3_data(context) -> List[Stock]:
     return list(csv_helper(s3_key))
 
 
-@op
+@op (
+    ins={"stocks": In(dagster_type=List[Stock])},
+    out={"agg": Out(dagster_type=Aggregation)}
+)
 def process_data(context, stocks: List[Stock]) -> Aggregation:
     highest_stock = max(stocks, key= lambda stock: stock.high)
     return Aggregation(date=highest_stock.date,high=highest_stock.high)
