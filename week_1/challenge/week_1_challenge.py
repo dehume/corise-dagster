@@ -60,8 +60,8 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
         "s3_key": String
     },
     out = {
-        "stocks": Out(is_required=False),
-        "empty_stocks": Out(is_required=False)
+        "stocks": Out(List[Stock],is_required=False),
+        "empty_stocks": Out(Any,is_required=False)
     }
 )
 def get_s3_data(context) -> List[Stock]:
@@ -75,7 +75,7 @@ def get_s3_data(context) -> List[Stock]:
 
 @op(
     config_schema = {"nlargest": int},
-    out = DynamicOut()
+    out = DynamicOut(Aggregation)
 )
 def process_data(context, stocks: List[Stock])-> Aggregation:
     stocks.sort(key= lambda stock: stock.high, reverse= True)
@@ -85,7 +85,7 @@ def process_data(context, stocks: List[Stock])-> Aggregation:
         yield DynamicOutput(agg, mapping_key=str(i))
 
 @op
-def put_redis_data(context, aggs: Aggregation):
+def put_redis_data(context, aggs: Aggregation) -> Nothing:
     pass
 
 
