@@ -60,7 +60,7 @@ def process_data(context, stocks: List[Stock]) -> Aggregation:
     return Aggregation(date=highest_stock.date,high=highest_stock.high)
 
 @op
-def put_redis_data(context, aggs: Aggregation):
+def put_redis_data(context, aggs: Aggregation) -> Nothing:
     pass
 
 
