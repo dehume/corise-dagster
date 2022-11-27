@@ -4,14 +4,15 @@ config-version: 2
 
 profile: 'test_dbt'
 
-source-paths: ["models"]
+model-paths: ["models"]
 analysis-paths: ["analysis"]
 test-paths: ["tests"]
-data-paths: ["data"]
+seed-paths: ["data"]
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
 target-path: "target"
+log-path: "~/"
 clean-targets:
   - "target"
   - "dbt_modules"

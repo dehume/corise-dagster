@@ -10,6 +10,8 @@ from workspaces.project.week_4 import (
     process_data_docker,
     put_redis_data,
     put_redis_data_docker,
+    put_s3_data,
+    put_s3_data_docker,
 )
 from workspaces.types import Aggregation, Stock
 
@@ -89,6 +91,13 @@ def test_put_redis_data(aggregation):
         assert redis_mock.put_data.called
 
 
+def test_put_s3_data(aggregation):
+    s3_mock = MagicMock()
+    with build_op_context(resources={"s3": s3_mock}) as context:
+        put_s3_data(context, aggregation)
+        assert s3_mock.put_data.called
+
+
 def test_get_s3_data_docker():
     assert get_s3_data_docker.required_resource_keys == {"s3", "io_manager"}
     assert get_s3_data_docker.group_names_by_key == {AssetKey(["get_s3_data"]): "corise"}
@@ -102,3 +111,8 @@ def test_process_data_docker():
 def test_put_redis_data_docker():
     assert put_redis_data_docker.required_resource_keys == {"redis", "io_manager"}
     assert put_redis_data_docker.group_names_by_key == {AssetKey(["put_redis_data"]): "corise"}
+
+
+def test_put_s3_data_docker():
+    assert put_s3_data_docker.required_resource_keys == {"s3", "io_manager"}
+    assert put_s3_data_docker.group_names_by_key == {AssetKey(["put_s3_data"]): "corise"}

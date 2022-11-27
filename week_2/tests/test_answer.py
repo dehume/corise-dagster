@@ -7,6 +7,7 @@ from workspaces.project.week_2 import (
     get_s3_data,
     process_data,
     put_redis_data,
+    put_s3_data,
     week_2_pipeline,
 )
 from workspaces.resources import mock_s3_resource
@@ -56,7 +57,8 @@ def test_get_s3_data(stock_list):
 
 
 def test_process_data(stocks):
-    assert process_data(stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
+    with build_op_context() as context:
+        assert process_data(context, stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
 
 
 def test_put_redis_data(aggregation):
@@ -64,6 +66,13 @@ def test_put_redis_data(aggregation):
     with build_op_context(resources={"redis": redis_mock}) as context:
         put_redis_data(context, aggregation)
         assert redis_mock.put_data.called
+
+
+def test_put_s3_data(aggregation):
+    s3_mock = MagicMock()
+    with build_op_context(resources={"s3": s3_mock}) as context:
+        put_s3_data(context, aggregation)
+        assert s3_mock.put_data.called
 
 
 def test_week_2_pipeline(stock_list):
