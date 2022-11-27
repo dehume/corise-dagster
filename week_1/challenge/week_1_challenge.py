@@ -2,7 +2,9 @@ import csv
 from datetime import datetime
 from heapq import nlargest
 from random import randint
-from typing import Iterator, List
+from typing import Iterator, List, Union
+import hashlib
+
 
 from dagster import (
     Any,
@@ -55,19 +57,37 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
-@op
-def get_s3_data():
-    pass
+@op(
+    description="Get a list of stocks from an S3 file",
+    config_schema={"s3_key": String},
+    out={
+        "stocks": Out(dagster_type=List[Stock], description="List of Stock objects in the data file.", is_required=False),
+        "empty_stocks": Out(dagster_type=Nothing, description="List of Stock objects in the data file.", is_required=False)
+        },
+    tags={"kind": "s3"}
+)
+def get_s3_data(context) -> Union[list[Stock], Nothing]:
+    stocks = list(csv_helper(context.op_config["s3_key"]))
+    if stocks:
+        yield Output(stocks, "stocks")
+    else:
+        yield Output(None, "empty_stocks")
 
 
-@op
-def process_data():
-    pass
+@op(
+    description="Given a list of stocks return the top x Aggregations with the greatest high value",
+    config_schema={"nlargest": int},
+    ins={
+        "stocks": In(dagster_type=List[Stock], description="List of Stock objects in the data file.")
+        },
+    out=DynamicOut()
+)
+def process_data(context, stocks: list[Stock]) -> Aggregation:
+    sorted_stocks = sorted(stocks, key= lambda stock: stock.high)
+    greatest_stock = sorted_stocks[-context.op_config["nlargest"]:]
 
-
-@op
-def put_redis_data():
-    pass
+    for stock in greatest_stock:
+        yield DynamicOutput(Aggregation(date=stock.date, high=stock.high), mapping_key=f"{randint(1,1000000)}")
 
 
 @op(
@@ -78,6 +98,19 @@ def empty_stock_notify(context, empty_stocks) -> Nothing:
     context.log.info("No stocks returned")
 
 
+@op(
+    description="Upload an Aggregation to Redis",
+    ins={"agg": In(dagster_type=Aggregation)},
+    tags={"kind": "redis"}
+    )
+def put_redis_data(context, agg: Aggregation) -> Nothing:
+    pass
+
+
 @job
 def week_1_challenge():
-    pass
+    stocks, empty_stock = get_s3_data()
+    empty_stock_notify(empty_stock)
+    process = process_data(stocks)
+    process.map(put_redis_data)
+
