@@ -124,7 +124,8 @@ def test_get_s3_data(stock_list):
 
 
 def test_process_data(stocks):
-    assert process_data(stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
+    with build_op_context() as context:
+        assert process_data(context, stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
 
 
 def test_put_redis_data(aggregation):
