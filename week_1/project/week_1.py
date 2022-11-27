@@ -58,7 +58,7 @@ def process_data(context, stocks: List[Stock]) -> Aggregation:
     return Aggregation(date = sorted_stocks[0].date, high = sorted_stocks[0].high)
 
 @op(
-    description="Upload and Aggregation to Redis"
+    description="Upload the Aggregation to Redis"
 )
 def put_redis_data(context, stock: Aggregation):
     context.log.info("Stock date: {date}, Stock high: {high}".format(date = stock.date, high = stock.high))
