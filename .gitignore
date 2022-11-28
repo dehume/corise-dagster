@@ -157,3 +157,14 @@ cython_debug/
 
 # Mac OS
 .DS_Store
+.idea/.gitignore
+.idea/corise-dagster.iml
+.gitignore
+.gitignore
+.gitignore
+.gitignore
+.idea/modules.xml
+.gitignore
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/vcs.xml
+dagster
