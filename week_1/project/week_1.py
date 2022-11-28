@@ -67,4 +67,3 @@ def week_1_pipeline():
     data = get_s3_data()
     agg_data = process_data(data)
     put_redis_data(agg_data)
-    pass
