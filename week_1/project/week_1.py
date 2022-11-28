@@ -48,7 +48,7 @@ def get_s3_data(context) -> List[Stock]:
 
 
 @op
-def process_data(data: List[Stock]) -> Aggregation:
+def process_data(context, data: List[Stock]) -> Aggregation:
     agg_stock = Aggregation(date=datetime.today(), high=-1)
     for stock in data: 
         next_agg = Aggregation(date=stock.date, high=stock.high)
@@ -58,7 +58,7 @@ def process_data(data: List[Stock]) -> Aggregation:
 
 
 @op
-def put_redis_data():
+def put_redis_data(context, agg_data: Aggregation):
     pass
 
 
@@ -66,4 +66,5 @@ def put_redis_data():
 def week_1_pipeline():
     data = get_s3_data()
     agg_data = process_data(data)
+    put_redis_data(agg_data)
     pass
