@@ -1,8 +1,21 @@
 from random import randint
 
-from dagster import In, Nothing, String, graph, op
 from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op
 from workspaces.resources import postgres_resource
+
+from dagster import (
+    In,
+    Out,
+    Output,
+    Nothing,
+    String,
+    Any,
+    graph,
+    op,
+    HookContext,
+    failure_hook,
+    success_hook
+)
 
 DBT_PROJECT_PATH = "/opt/dagster/dagster_home/dbt_test_project/."
 
@@ -21,13 +34,12 @@ def create_dbt_table(context) -> String:
     context.resources.database.execute_query(sql)
     return table_name
 
-
 @op(
     ins={"table_name": In(dagster_type=String)},
     required_resource_keys={"database"},
     tags={"kind": "postgres"},
 )
-def insert_dbt_data(context, table_name):
+def insert_dbt_data(context, table_name)-> Nothing:
     sql = f"INSERT INTO {table_name} (column_1, column_2, column_3) VALUES ('A', 'B', 'C');"
 
     number_of_rows = randint(1, 100)
@@ -37,11 +49,58 @@ def insert_dbt_data(context, table_name):
 
     context.log.info("Batch inserted")
 
+@op(
+    required_resource_keys={"dbt"}
+)
+def dbt_run():
+    dbt_run_op()
+
+
+@op (
+    required_resource_keys={"dbt"},
+    out = {
+        "success": Out(Any, is_required=False),
+        "failure": Out(Any, is_required=False)
+    }
+)
+def dbt_test():
+    try:
+        dbt_test_op()
+        yield Output(None, "success")
+    except:
+        yield Output(None, "failure")
+
+
+@op(
+    description = "Notify if dbt test succeeded"
+)
+def dbt_test_success(context, success) -> Nothing:
+    context.log.info("Success")
+
+
+@op(
+    description= "Notify if dbt test failed"
+)
+def dbt_test_failure(context, failure) -> Nothing:
+    context.log.info("Failure") 
+
+@success_hook
+def notify_success(context: HookContext):
+    message = f"Op {context.op.name} finished successfully"
+    context.log.info(message)
+
+@failure_hook
+def notify_failure(context: HookContext):
+    message = f"Op {context.op.name} failed"
+    context.log.info(message)
 
 @graph
 def week_2_challenge():
-    pass
-
+    tbl = create_dbt_table()
+    # success, failure = dbt_test_op(dbt_run_op(insert_dbt_data(tbl)))
+    # dbt_test_success(success)
+    # dbt_test_failure(failure)
+    dbt_test_op.with_hooks({notify_success, notify_failure})(dbt_run_op(insert_dbt_data(tbl)))
 
 docker = {
     "resources": {
@@ -68,4 +127,9 @@ docker = {
 
 week_2_challenge_docker = week_2_challenge.to_job(
     name="week_2_challenge_docker",
+    config = docker,
+    resource_defs = {
+        "database": postgres_resource,
+        "dbt": dbt_cli_resource
+    }
 )
