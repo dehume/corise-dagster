@@ -55,19 +55,27 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
-@op
-def get_s3_data():
-    pass
+@op(config_schema={"s3_key": str}, out={"stocks": Out(is_required=False), "empty_stocks": Out(is_required=False)})
+def get_s3_data(context) -> tuple[list[Stock], Nothing]:
+    s3_key = context.op_config["s3_key"]
+    stocks = list(csv_helper(s3_key))
+    if len(stocks) == 0:
+        yield Output(None, "empty_stocks")
+    else:
+        yield Output(stocks, "stocks")
+
+
+@op(config_schema={"nlargest": int}, out=DynamicOut())
+def process_data(context, stocks: list[Stock]) -> Aggregation:
+    k = context.op_config["nlargest"]
+    top_stocks = nlargest(k, stocks, key=lambda stock: stock.high)
+    for stock in top_stocks:
+        yield DynamicOutput(Aggregation(date=stock.date, high=stock.high), mapping_key=stock.date.strftime("%Y%m%d"))
 
 
 @op
-def process_data():
-    pass
-
-
-@op
-def put_redis_data():
-    pass
+def put_redis_data(context, agg: Aggregation):
+    context.log.info(f"Putting {agg} into Redis")
 
 
 @op(
@@ -80,4 +88,9 @@ def empty_stock_notify(context, empty_stocks) -> Nothing:
 
 @job
 def week_1_challenge():
-    pass
+    stocks, empty_stocks = get_s3_data()
+    top_stocks = process_data(stocks)
+    top_stocks.map(put_redis_data)
+
+    # If empty, notify
+    empty_stock_notify(empty_stocks)
