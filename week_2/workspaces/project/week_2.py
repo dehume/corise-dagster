@@ -26,8 +26,8 @@ def put_redis_data(context, highest: Aggregation) -> Nothing:
 
 @op(required_resource_keys={"s3"})
 def put_s3_data(context, highest: Aggregation) -> Nothing:
-    s3bucket = get_s3_data.config_field.config_type.fields["s3_key"],  # haha, this was a tricky one!
-    context.resources.s3.put_data(s3bucket, highest)
+    s3bucket = get_s3_data.config_field.config_type.fields["s3_key"],  # no, because we write over the csv file data
+    context.resources.s3.put_data(str(highest.date), highest)
 
 
 @graph
