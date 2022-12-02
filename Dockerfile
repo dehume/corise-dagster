@@ -88,6 +88,6 @@ FROM runner AS challenge
 ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_challenge
 ARG COURSE_WEEK
 COPY ${COURSE_WEEK}/workspaces/ ./workspaces
-USER dagster: dagster
+USER dagster:dagster
 EXPOSE 4002
 CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4002", "-f", "workspaces/challenge/repo.py"]
