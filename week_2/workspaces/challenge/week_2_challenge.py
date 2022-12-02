@@ -1,6 +1,6 @@
 from random import randint
 
-from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op
+from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op, DbtOutput
 from workspaces.resources import postgres_resource
 
 from dagster import (
@@ -46,13 +46,13 @@ def insert_dbt_data(context, table_name)-> Nothing:
     for _ in range(number_of_rows):
         context.resources.database.execute_query(sql)
         context.log.info("Inserted a row")
-
     context.log.info("Batch inserted")
+
 
 @op(
     required_resource_keys={"dbt"}
 )
-def dbt_run():
+def dbt_run() -> DbtOutput:
     dbt_run_op()
 
 
@@ -63,31 +63,15 @@ def dbt_run():
         "failure": Out(Any, is_required=False)
     }
 )
-def dbt_test():
-    try:
-        dbt_test_op()
-        yield Output(None, "success")
-    except:
-        yield Output(None, "failure")
+def dbt_test() -> DbtOutput:
+    dbt_test_op()
 
-
-@op(
-    description = "Notify if dbt test succeeded"
-)
-def dbt_test_success(context, success) -> Nothing:
-    context.log.info("Success")
-
-
-@op(
-    description= "Notify if dbt test failed"
-)
-def dbt_test_failure(context, failure) -> Nothing:
-    context.log.info("Failure") 
 
 @success_hook
 def notify_success(context: HookContext):
     message = f"Op {context.op.name} finished successfully"
     context.log.info(message)
+
 
 @failure_hook
 def notify_failure(context: HookContext):
@@ -97,9 +81,6 @@ def notify_failure(context: HookContext):
 @graph
 def week_2_challenge():
     tbl = create_dbt_table()
-    # success, failure = dbt_test_op(dbt_run_op(insert_dbt_data(tbl)))
-    # dbt_test_success(success)
-    # dbt_test_failure(failure)
     dbt_test_op.with_hooks({notify_success, notify_failure})(dbt_run_op(insert_dbt_data(tbl)))
 
 docker = {
