@@ -58,25 +58,20 @@ def dbt_run() -> DbtOutput:
 
 @op (
     required_resource_keys={"dbt"},
-    out = {
-        "success": Out(Any, is_required=False),
-        "failure": Out(Any, is_required=False)
-    },
     tags={"kind": "dbt"}
-
 )
 def dbt_test() -> DbtOutput:
     dbt_test_op()
 
 
 @success_hook
-def notify_success(context: HookContext):
+def notify_success(context: HookContext) -> Nothing:
     message = f"Op {context.op.name} finished successfully"
     context.log.info(message)
 
 
 @failure_hook
-def notify_failure(context: HookContext):
+def notify_failure(context: HookContext) -> Nothing:
     message = f"Op {context.op.name} failed"
     context.log.info(message)
 
