@@ -6,7 +6,6 @@ from workspaces.resources import postgres_resource
 from dagster import (
     In,
     Out,
-    Output,
     Nothing,
     String,
     Any,
