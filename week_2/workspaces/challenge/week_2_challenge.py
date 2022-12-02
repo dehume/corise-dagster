@@ -50,7 +50,8 @@ def insert_dbt_data(context, table_name)-> Nothing:
 
 
 @op(
-    required_resource_keys={"dbt"}
+    required_resource_keys={"dbt"},
+    tags={"kind": "dbt"}
 )
 def dbt_run() -> DbtOutput:
     dbt_run_op()
@@ -61,7 +62,9 @@ def dbt_run() -> DbtOutput:
     out = {
         "success": Out(Any, is_required=False),
         "failure": Out(Any, is_required=False)
-    }
+    },
+    tags={"kind": "dbt"}
+
 )
 def dbt_test() -> DbtOutput:
     dbt_test_op()
