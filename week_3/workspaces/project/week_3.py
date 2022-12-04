@@ -22,26 +22,31 @@ from workspaces.types import Aggregation, Stock
 
 @op
 def get_s3_data():
+    # You can reuse the logic from the previous week
     pass
 
 
 @op
 def process_data():
+    # You can reuse the logic from the previous week
     pass
 
 
 @op
 def put_redis_data():
+    # You can reuse the logic from the previous week
     pass
 
 
 @op
 def put_s3_data():
+    # You can reuse the logic from the previous week
     pass
 
 
 @graph
 def week_3_pipeline():
+    # You can reuse the logic from the previous week
     pass
 
 
