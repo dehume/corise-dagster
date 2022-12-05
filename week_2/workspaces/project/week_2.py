@@ -47,7 +47,7 @@ def week_2_pipeline():
 
 
 local = {
-    "ops": {"get_s3_data": {"config": {"s3_key": "week_2/data/stock.csv"}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
 
 docker = {
@@ -67,7 +67,7 @@ docker = {
             }
         },
     },
-    "ops": {"get_s3_data": {"config": {"s3_key": "week_2/data/stock.csv"}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
 }
 
 week_2_pipeline_local = week_2_pipeline.to_job(
