@@ -15,7 +15,8 @@ from dagster import (
     schedule,
     sensor,
     static_partitioned_config,
-    build_schedule_from_partitioned_job
+    build_schedule_from_partitioned_job,
+    ScheduleEvaluationContext
 )
 from workspaces.project.sensors import get_s3_keys
 from workspaces.resources import mock_s3_resource, redis_resource, s3_resource
@@ -93,7 +94,7 @@ docker = {
 )
 def docker_config(partition_key: str):
     partitioned_config = docker.copy()
-    partitioned_config["ops"]["get_s3_data"]["config"]["s3_key"] = f"prefix/stock_{partition_key}.csv"
+    partitioned_config["ops"]["get_s3_data"]["config"]["s3_key"] = f"{partition_key}"
     return partitioned_config
 
 week_3_pipeline_local = week_3_pipeline.to_job(
@@ -107,7 +108,7 @@ week_3_pipeline_local = week_3_pipeline.to_job(
 
 week_3_pipeline_docker = week_3_pipeline.to_job(
     name="week_3_pipeline_docker",
-    config= docker_config,
+    config= docker,
     resource_defs = {
         "s3": s3_resource,
         "redis": redis_resource
@@ -118,14 +119,19 @@ week_3_pipeline_docker = week_3_pipeline.to_job(
 
 week_3_schedule_local = ScheduleDefinition(
     job=week_3_pipeline_local,
-    cron_schedule="15 * * * *"
+    cron_schedule="*/15 * * * *"
 )
 
 
-@schedule
-def week_3_schedule_docker():
-    return build_schedule_from_partitioned_job(week_3_pipeline_docker)
-
+@schedule(
+    job=week_3_pipeline_docker,
+    cron_schedule="0 * * * *"
+)
+def week_3_schedule_docker(context: ScheduleEvaluationContext):
+    return RunRequest(
+        run_key=context.scheduled_execution_time.strftime("%Y-%m-%d"),
+        run_config=docker_config(new_file)        
+    )
 
 @sensor(
     job=week_3_pipeline_docker,
@@ -133,22 +139,15 @@ def week_3_schedule_docker():
 )
 def week_3_sensor_docker(context):
     new_files = get_s3_keys(
-        bucket=context.resources.s3.config.bucket
+        bucket="dagster",
+        prefix="prefix"
     )
     if not new_files:
-        yield SkipReason("No new s3 files found in bucket")
+        yield SkipReason("No new s3 files found in bucket.")
         return
     for new_file in new_files:
         yield RunRequest(
             run_key=new_file,
-            run_config= {
-                "ops": {
-                    "get_s3_data": {
-                        "config": {
-                            "s3_key": "prefix/stock_9.csv"
-                        }
-                    }
-                }
-            }
+            run_config=docker_config(new_file)
         )
 
