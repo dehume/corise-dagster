@@ -15,7 +15,6 @@ from dagster import (
     schedule,
     sensor,
     static_partitioned_config,
-    build_schedule_from_partitioned_job,
     ScheduleEvaluationContext
 )
 from workspaces.project.sensors import get_s3_keys
