@@ -94,7 +94,7 @@ docker = {
 )
 def docker_config(partition_key: str):
     partitioned_config = docker.copy()
-    partitioned_config["ops"]["get_s3_data"]["config"]["s3_key"] = f"{partition_key}"
+    partitioned_config["ops"]["get_s3_data"]["config"]["s3_key"] = f"prefix/stock_{partition_key}.csv"
     return partitioned_config
 
 week_3_pipeline_local = week_3_pipeline.to_job(
@@ -130,7 +130,7 @@ week_3_schedule_local = ScheduleDefinition(
 def week_3_schedule_docker(context: ScheduleEvaluationContext):
     return RunRequest(
         run_key=context.scheduled_execution_time.strftime("%Y-%m-%d"),
-        run_config=docker_config(new_file)        
+        run_config=docker_config()        
     )
 
 @sensor(
@@ -140,14 +140,16 @@ def week_3_schedule_docker(context: ScheduleEvaluationContext):
 def week_3_sensor_docker(context):
     new_files = get_s3_keys(
         bucket="dagster",
-        prefix="prefix"
+        prefix="prefix",
+        endpoint_url="http://host.docker.internal:4566"
     )
+    sensor_docker_config = docker.copy()
     if not new_files:
         yield SkipReason("No new s3 files found in bucket.")
         return
     for new_file in new_files:
+        sensor_docker_config["ops"]["get_s3_data"]["config"]["s3_key"] = f"{new_file}"
         yield RunRequest(
             run_key=new_file,
-            run_config=docker_config(new_file)
+            run_config=sensor_docker_config
         )
-
