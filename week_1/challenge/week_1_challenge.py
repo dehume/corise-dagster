@@ -55,18 +55,37 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
+@op (
+    config_schema = {
+        "s3_key": String
+    },
+    out = {
+        "stocks": Out(List[Stock],is_required=False),
+        "empty_stocks": Out(Any,is_required=False)
+    }
+)
+def get_s3_data(context) -> List[Stock]:
+    s3_key = context.op_config["s3_key"]
+    iter = csv_helper(s3_key)
+    if not any(iter):
+        yield Output(None, "empty_stocks")
+    else:
+        yield Output(list(iter), "stocks")
+
+
+@op(
+    config_schema = {"nlargest": int},
+    out = DynamicOut(Aggregation)
+)
+def process_data(context, stocks: List[Stock])-> Aggregation:
+    stocks.sort(key= lambda stock: stock.high, reverse= True)
+    n = context.op_config["nlargest"]
+    for i in range(0,n):
+        agg = Aggregation(date=stocks[n].date, high=stocks[n].high)
+        yield DynamicOutput(agg, mapping_key=str(i))
+
 @op
-def get_s3_data():
-    pass
-
-
-@op
-def process_data():
-    pass
-
-
-@op
-def put_redis_data():
+def put_redis_data(context, aggs: Aggregation) -> Nothing:
     pass
 
 
@@ -80,4 +99,8 @@ def empty_stock_notify(context, empty_stocks) -> Nothing:
 
 @job
 def week_1_challenge():
-    pass
+    stocks, no_stock = get_s3_data()
+    processed = process_data(stocks)
+    empty_stock_notify(no_stock)
+    processed.map(put_redis_data)
+

@@ -1,8 +1,20 @@
 from random import randint
 
-from dagster import In, Nothing, String, graph, op
-from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op
+from dagster_dbt import dbt_cli_resource, dbt_run_op, dbt_test_op, DbtOutput
 from workspaces.resources import postgres_resource
+
+from dagster import (
+    In,
+    Out,
+    Nothing,
+    String,
+    Any,
+    graph,
+    op,
+    HookContext,
+    failure_hook,
+    success_hook
+)
 
 DBT_PROJECT_PATH = "/opt/dagster/dagster_home/dbt_test_project/."
 
@@ -21,27 +33,52 @@ def create_dbt_table(context) -> String:
     context.resources.database.execute_query(sql)
     return table_name
 
-
 @op(
     ins={"table_name": In(dagster_type=String)},
     required_resource_keys={"database"},
     tags={"kind": "postgres"},
 )
-def insert_dbt_data(context, table_name):
+def insert_dbt_data(context, table_name)-> Nothing:
     sql = f"INSERT INTO {table_name} (column_1, column_2, column_3) VALUES ('A', 'B', 'C');"
 
     number_of_rows = randint(1, 100)
     for _ in range(number_of_rows):
         context.resources.database.execute_query(sql)
         context.log.info("Inserted a row")
-
     context.log.info("Batch inserted")
 
 
+@op(
+    required_resource_keys={"dbt"},
+    tags={"kind": "dbt"}
+)
+def dbt_run() -> DbtOutput:
+    dbt_run_op()
+
+
+@op (
+    required_resource_keys={"dbt"},
+    tags={"kind": "dbt"}
+)
+def dbt_test() -> DbtOutput:
+    dbt_test_op()
+
+
+@success_hook
+def notify_success(context: HookContext) -> Nothing:
+    message = f"Op {context.op.name} finished successfully"
+    context.log.info(message)
+
+
+@failure_hook
+def notify_failure(context: HookContext) -> Nothing:
+    message = f"Op {context.op.name} failed"
+    context.log.info(message)
+
 @graph
 def week_2_challenge():
-    pass
-
+    tbl = create_dbt_table()
+    dbt_test_op.with_hooks({notify_success, notify_failure})(dbt_run_op(insert_dbt_data(tbl)))
 
 docker = {
     "resources": {
@@ -68,4 +105,9 @@ docker = {
 
 week_2_challenge_docker = week_2_challenge.to_job(
     name="week_2_challenge_docker",
+    config = docker,
+    resource_defs = {
+        "database": postgres_resource,
+        "dbt": dbt_cli_resource
+    }
 )
