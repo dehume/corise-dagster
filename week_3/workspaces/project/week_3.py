@@ -52,8 +52,7 @@ def put_redis_data(context, agg: Aggregation) -> Nothing:
     required_resource_keys={"s3"}
 )
 def put_s3_data(context, agg: Aggregation) -> Nothing:
-    context.resources.s3.put_data(key_name=agg.date, data=agg)
-
+    context.resources.s3.put_data(key_name=str(agg.date), data=agg)
 
 @graph
 def week_3_pipeline():
