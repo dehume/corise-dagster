@@ -128,7 +128,7 @@ week_3_schedule_local = ScheduleDefinition(
 )
 def week_3_schedule_docker(context: ScheduleEvaluationContext):
     return RunRequest(
-        run_key=context.scheduled_execution_time.strftime("%Y-%m-%d"),
+        run_key=context.scheduled_execution_time.strftime("%Y-%m-%d %H:%M:%S"),
         run_config=docker_config()        
     )
 
@@ -140,7 +140,7 @@ def week_3_sensor_docker(context):
     new_files = get_s3_keys(
         bucket="dagster",
         prefix="prefix",
-        endpoint_url="http://host.docker.internal:4566"
+        endpoint_url="http://localstack:4566"
     )
     sensor_docker_config = docker.copy()
     if not new_files:
