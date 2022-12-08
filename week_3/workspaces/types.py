@@ -3,6 +3,11 @@ from datetime import datetime
 from dagster import usable_as_dagster_type
 from pydantic import BaseModel
 
+@usable_as_dagster_type(description="Postgres Record")
+class PostgresRecord(BaseModel):
+    v1: str
+    v2: str
+    v3: str
 
 @usable_as_dagster_type(description="Stock data")
 class Stock(BaseModel):
