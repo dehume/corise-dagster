@@ -113,14 +113,21 @@ week_3_schedule_local = ScheduleDefinition(job=week_3_pipeline_local,
           job=week_3_pipeline_docker)
 def week_3_schedule_docker(context: ScheduleEvaluationContext):
     # following example at https://docs.dagster.io/concepts/partitions-schedules-sensors/schedules
-    return RunRequest(
-        run_key=context.scheduled_execution_time.strftime("%Y-%m-%d"),
-        run_config=docker_config()
-    )
+    for p in PARTITIONS:  # is there a way to avoid using a global variable?
+        week_3_pipeline_docker.run_request_for_partition(
+            partition_key=p,
+            key=p
+        )
+
+    # return RunRequest(
+    #     run_key=context.scheduled_execution_time.strftime("%Y-%m-%d"),
+    #     run_config=docker_config()  # << creates error in dagit
+    #           # docker_config() missing 1 required positional argument: 'partition_key'
+    # )
 
 
 @sensor(job=week_3_pipeline_docker,
-        minimum_interval_seconds=31,
+        minimum_interval_seconds=32,
         )
 def week_3_sensor_docker(context: SensorEvaluationContext):
     s3config = docker['resources']['s3']['config']
