@@ -6,7 +6,7 @@ from workspaces.types import Aggregation, Stock
 
 
 @op(config_schema={"s3_key": str}, required_resource_keys={"s3"})
-def get_s3_data(context) -> list[Stock]:
+def get_s3_data(context) -> List[Stock]:
     s3_key = context.op_config["s3_key"]
     context.log.info(f"Getting {s3_key} from S3")
     records = context.resources.s3.get_data(s3_key)
@@ -15,7 +15,7 @@ def get_s3_data(context) -> list[Stock]:
 
 
 @op
-def process_data(context, stocks: list[Stock]) -> Aggregation:
+def process_data(context, stocks: List[Stock]) -> Aggregation:
     max_stock = max(stocks, key=lambda stock: stock.high)
     return Aggregation(date=max_stock.date, high=max_stock.high)
 
