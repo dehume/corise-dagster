@@ -48,5 +48,5 @@ get_s3_data_docker, process_data_docker, put_redis_data_docker, put_s3_data_dock
             },
         },
         "redis": {"config": {"host": "redis", "port": 6379}},
-    },
+    }
     )
