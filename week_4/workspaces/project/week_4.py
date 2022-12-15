@@ -37,6 +37,8 @@ get_s3_data_docker, process_data_docker, put_redis_data_docker, put_s3_data_dock
     resource_defs={"s3": s3_resource,
                    "redis": redis_resource,
                    "io_manager": fs_io_manager},
+    # to change storage dir, use fs_io_manager.configured({"base_dir": "/my/base/path"}
+
     resource_config_by_key={
         "s3": {
             "config": {"bucket": "dagster",
