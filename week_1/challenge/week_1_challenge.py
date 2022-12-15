@@ -30,7 +30,7 @@ class Stock(BaseModel):
     low: float
 
     @classmethod
-    def from_list(cls, input_list: List[List]):
+    def from_list(cls, input_list: List[str]):
         """Do not worry about this class method for now"""
         return cls(
             date=datetime.strptime(input_list[0], "%Y/%m/%d"),
