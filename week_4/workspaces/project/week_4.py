@@ -9,7 +9,8 @@ from workspaces.types import Aggregation, Stock
     config_schema={
         "s3_key": String
     },
-    required_resource_keys={"s3"}
+    required_resource_keys={"s3"},
+    op_tags={"kind": "s3"}
 )
 def get_s3_data(context) -> List[Stock]:
     s3_key = context.op_config["s3_key"]
@@ -28,7 +29,9 @@ def process_data(upstream) -> Aggregation:
 @asset(
     group_name="corise",
     ins={"upstream": AssetIn("process_data")},
-    required_resource_keys= {"redis"}
+    required_resource_keys= {"redis"},
+    op_tags={"kind": "redis"}
+
 )
 def put_redis_data(context, upstream) -> Nothing:
     context.resources.redis.put_data(name=str(upstream.date), value=str(upstream.high))
@@ -37,7 +40,8 @@ def put_redis_data(context, upstream) -> Nothing:
 @asset(
     group_name="corise",
     ins={"upstream": AssetIn("process_data")},
-    required_resource_keys={"s3"}
+    required_resource_keys={"s3"},
+    op_tags={"kind": "s3"}
 )
 def put_s3_data(context, upstream) -> Nothing:
     context.resources.s3.put_data(key_name=str(upstream.date), data=upstream)
