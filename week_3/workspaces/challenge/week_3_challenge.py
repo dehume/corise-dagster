@@ -13,7 +13,7 @@ class PostgresIOManager(IOManager):
         pass
 
 
-@io_manager(required_resource_keys={"postgres"})
+@io_manager(required_resource_keys={"database"})
 def postgres_io_manager(init_context):
     return PostgresIOManager()
 

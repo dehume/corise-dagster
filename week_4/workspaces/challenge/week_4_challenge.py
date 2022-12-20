@@ -10,6 +10,7 @@ SOURCE_TABLE = "analytics.dbt_table"
 @asset(
     required_resource_keys={"database"},
     op_tags={"kind": "postgres"},
+    key_prefix=["postgresql"],
 )
 def create_dbt_table(context):
     sql = "CREATE SCHEMA IF NOT EXISTS analytics;"
@@ -21,8 +22,9 @@ def create_dbt_table(context):
 @asset(
     required_resource_keys={"database"},
     op_tags={"kind": "postgres"},
+    key_prefix=["postgresql"],
 )
-def insert_dbt_data(context, create_dbt_table):
+def dbt_table(context, create_dbt_table):
     sql = f"INSERT INTO {SOURCE_TABLE} (column_1, column_2, column_3) VALUES ('A', 'B', 'C');"
 
     number_of_rows = randint(1, 10)
@@ -31,3 +33,8 @@ def insert_dbt_data(context, create_dbt_table):
         context.log.info("Inserted a row")
 
     context.log.info("Batch inserted")
+
+
+@asset
+def end(context):
+    pass

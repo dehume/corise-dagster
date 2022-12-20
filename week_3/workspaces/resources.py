@@ -24,7 +24,7 @@ class Postgres:
         return f"postgresql://{self.user}:{self.password}@{self.host}/{self.database}"
 
     def execute_query(self, query: str):
-        self._engine.execute(query)
+        return self._engine.execute(query)
 
 
 class S3:
