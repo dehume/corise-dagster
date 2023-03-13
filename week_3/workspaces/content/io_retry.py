@@ -1,15 +1,30 @@
 from random import randint
 
-from dagster import RetryPolicy, String, fs_io_manager, graph, op
+from dagster import (
+    In,
+    Nothing,
+    OpExecutionContext,
+    Out,
+    RetryPolicy,
+    String,
+    fs_io_manager,
+    graph,
+    op,
+)
+from dagster_aws.s3.io_manager import s3_pickle_io_manager
 
 
-@op
-def time_consuming_step() -> String:
+@op(
+    out={"value": Out(dagster_type=String)},
+)
+def time_consuming_step(context: OpExecutionContext):
     return "dagster"
 
 
-@op
-def unreliable_step(name: String):
+@op(
+    ins={"name": In(dagster_type=String)},
+)
+def unreliable_step(context: OpExecutionContext, name: String):
     if randint(0, 1) == 1:
         raise Exception("Flaky op")
     print(f"Hello, {name}!")
@@ -33,12 +48,18 @@ job_local_io_manager_retry = hello_dagster.to_job(
 )
 
 
-# @op(retry_policy=RetryPolicy(max_retries=5, delay=0.2), out=Out(io_manager_key="fs_io"))
+# @op(
+#     out={"value": Out(dagster_type=String)},
+#     retry_policy=RetryPolicy(max_retries=5, delay=0.2), out=Out(io_manager_key="fs_io")
+# )
 # def time_consuming_step() -> String:
 #     return "dagster"
 
 
-# @op(out=Out(io_manager_key="s3_io"))
+# @op(
+#     ins={"name": In(dagster_type=String)},
+#     out=Out(io_manager_key="s3_io")
+# )
 # def unreliable_step(name: String):
 #     if randint(0, 1) == 1:
 #         raise Exception("Flaky op")

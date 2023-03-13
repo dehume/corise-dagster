@@ -1,6 +1,17 @@
+from datetime import datetime
 from typing import List
 
-from dagster import In, Nothing, Out, ResourceDefinition, String, graph, op
+from dagster import (
+    In,
+    Nothing,
+    OpExecutionContext,
+    Out,
+    ResourceDefinition,
+    String,
+    graph,
+    op,
+)
+from workspaces.config import REDIS, S3, S3_FILE
 from workspaces.resources import mock_s3_resource, redis_resource, s3_resource
 from workspaces.types import Aggregation, Stock
 
@@ -26,38 +37,26 @@ def put_s3_data():
 
 
 @graph
-def week_2_pipeline():
+def machine_learning_graph():
     pass
 
 
 local = {
-    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": S3_FILE}}},
 }
 
 docker = {
     "resources": {
-        "s3": {
-            "config": {
-                "bucket": "dagster",
-                "access_key": "test",
-                "secret_key": "test",
-                "endpoint_url": "http://localstack:4566",
-            }
-        },
-        "redis": {
-            "config": {
-                "host": "redis",
-                "port": 6379,
-            }
-        },
+        "s3": {"config": S3},
+        "redis": {"config": REDIS},
     },
-    "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock.csv"}}},
+    "ops": {"get_s3_data": {"config": {"s3_key": S3_FILE}}},
 }
 
-week_2_pipeline_local = week_2_pipeline.to_job(
-    name="week_2_pipeline_local",
+machine_learning_job_local = machine_learning_graph.to_job(
+    name="machine_learning_job_local",
 )
 
-week_2_pipeline_docker = week_2_pipeline.to_job(
-    name="week_2_pipeline_docker",
+machine_learning_job_docker = machine_learning_graph.to_job(
+    name="machine_learning_job_docker",
 )

@@ -10,19 +10,20 @@ from dagster import (
     SkipReason,
     build_op_context,
 )
+from workspaces.config import REDIS, S3
 from workspaces.project.sensors import get_s3_keys
 from workspaces.project.week_3 import (
     docker_config,
     get_s3_data,
+    machine_learning_graph,
+    machine_learning_job_docker,
+    machine_learning_job_local,
+    machine_learning_schedule_docker,
+    machine_learning_schedule_local,
+    machine_learning_sensor_docker,
     process_data,
     put_redis_data,
     put_s3_data,
-    week_3_pipeline,
-    week_3_pipeline_docker,
-    week_3_pipeline_local,
-    week_3_schedule_docker,
-    week_3_schedule_local,
-    week_3_sensor_docker,
 )
 from workspaces.resources import mock_s3_resource
 from workspaces.types import Aggregation, Stock
@@ -63,20 +64,8 @@ def boto3_empty_return():
 def resource_config():
     return {
         "resources": {
-            "s3": {
-                "config": {
-                    "bucket": "dagster",
-                    "access_key": "test",
-                    "secret_key": "test",
-                    "endpoint_url": "http://localstack:4566",
-                }
-            },
-            "redis": {
-                "config": {
-                    "host": "redis",
-                    "port": 6379,
-                }
-            },
+            "s3": {"config": S3},
+            "redis": {"config": REDIS},
         },
     }
 
@@ -142,25 +131,25 @@ def test_put_s3_data(aggregation):
         assert s3_mock.put_data.called
 
 
-def test_week_3_pipeline():
-    week_3_pipeline.execute_in_process(
+def test_machine_learning_job():
+    machine_learning_graph.execute_in_process(
         run_config={"ops": {"get_s3_data": {"config": {"s3_key": "data/stock.csv"}}}},
         resources={"s3": mock_s3_resource, "redis": ResourceDefinition.mock_resource()},
     )
 
 
-def test_week_3_pipeline_docker():
-    assert week_3_pipeline_docker._solid_retry_policy == RetryPolicy(max_retries=10, delay=1)
+def test_machine_learning_job_docker():
+    assert machine_learning_job_docker._solid_retry_policy == RetryPolicy(max_retries=10, delay=1)
 
 
-def test_week_3_schedule_local():
-    assert week_3_schedule_local.job == week_3_pipeline_local
-    assert week_3_schedule_local.cron_schedule == "*/15 * * * *"
+def test_machine_learning_schedule_local():
+    assert machine_learning_schedule_local.job == machine_learning_job_local
+    assert machine_learning_schedule_local.cron_schedule == "*/15 * * * *"
 
 
-def test_week_3_schedule_docker():
-    assert week_3_schedule_docker.job == week_3_pipeline_docker
-    assert week_3_schedule_docker.cron_schedule == "0 * * * *"
+def test_machine_learning_schedule_docker():
+    assert machine_learning_schedule_docker.job == machine_learning_job_docker
+    assert machine_learning_schedule_docker.cron_schedule == "0 * * * *"
 
 
 @patch("boto3.client")
@@ -180,16 +169,16 @@ def test_get_s3_keys(mock, boto3_return):
 
 
 @patch("boto3.client")
-def test_week_3_sensor_docker_none(mock, boto3_empty_return):
+def test_machine_learning_sensor_docker_none(mock, boto3_empty_return):
     mock.return_value.list_objects_v2.side_effect = boto3_empty_return
-    result = week_3_sensor_docker(SensorEvaluationContext(None, None, None, None, None))
+    result = machine_learning_sensor_docker(SensorEvaluationContext(None, None, None, None, None))
     assert next(result) == SkipReason(skip_message="No new s3 files found in bucket.")
 
 
 @patch("boto3.client")
-def test_week_3_sensor_docker_keys(mock, resource_config, boto3_return):
+def test_machine_learning_sensor_docker_keys(mock, resource_config, boto3_return):
     mock.return_value.list_objects_v2.side_effect = boto3_return
-    result = week_3_sensor_docker(SensorEvaluationContext(None, None, None, None, None))
+    result = machine_learning_sensor_docker(SensorEvaluationContext(None, None, None, None, None))
     assert next(result) == RunRequest(
         run_key="key_1",
         run_config={

@@ -1,14 +1,18 @@
 from random import randint
 
-from dagster import String, asset, with_resources
-from workspaces.resources import postgres_resource
+from dagster import (
+    AssetSelection,
+    String,
+    asset,
+    define_asset_job,
+    load_assets_from_current_module,
+)
 
 
 @asset(
     config_schema={"table_name": String},
     required_resource_keys={"database"},
     op_tags={"kind": "postgres"},
-    group_name="etl",
 )
 def create_table(context) -> String:
     table_name = context.op_config["table_name"]
@@ -20,7 +24,6 @@ def create_table(context) -> String:
 @asset(
     required_resource_keys={"database"},
     op_tags={"kind": "postgres"},
-    group_name="etl",
 )
 def insert_into_table(context, create_table):
     sql = f"INSERT INTO {create_table} (column_1) VALUES (1);"
@@ -33,17 +36,12 @@ def insert_into_table(context, create_table):
     context.log.info("Batch inserted")
 
 
-create_table_docker, insert_into_table_docker = with_resources(
-    definitions=[create_table, insert_into_table],
-    resource_defs={"database": postgres_resource},
-    resource_config_by_key={
-        "database": {
-            "config": {
-                "host": "postgresql",
-                "user": "postgres_user",
-                "password": "postgres_password",
-                "database": "postgres_db",
-            }
-        },
-    },
+etl_assets = load_assets_from_current_module(
+    group_name="etl",
+)
+
+etl_asset_job = define_asset_job(
+    name="etl_asset_job",
+    selection=AssetSelection.groups("etl"),
+    config={"ops": {"create_table": {"config": {"table_name": "fake_table"}}}},
 )

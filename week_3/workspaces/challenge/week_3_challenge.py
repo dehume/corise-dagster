@@ -1,4 +1,23 @@
-from dagster import In, IOManager, Nothing, Out, String, graph, io_manager, op
+import json
+from random import randint
+from typing import Dict, List
+
+from dagster import (
+    In,
+    InitResourceContext,
+    InputContext,
+    IOManager,
+    Nothing,
+    OpExecutionContext,
+    Out,
+    OutputContext,
+    String,
+    graph,
+    io_manager,
+    op,
+)
+from sqlalchemy import column, table
+from workspaces.config import ANALYTICS_TABLE, POSTGRES
 from workspaces.resources import postgres_resource
 
 
@@ -9,21 +28,22 @@ class PostgresIOManager(IOManager):
     def handle_output(self):
         pass
 
-    def load_input(self, context):
+    def load_input(self):
         pass
 
 
 @io_manager(required_resource_keys={"database"})
-def postgres_io_manager(init_context):
-    return PostgresIOManager()
+def postgres_io_manager(init_context: InitResourceContext):
+    pass
 
 
 @op(
     config_schema={"table_name": String},
+    out=Out(String),
     required_resource_keys={"database"},
     tags={"kind": "postgres"},
 )
-def create_table(context) -> String:
+def create_table(context: OpExecutionContext):
     table_name = context.op_config["table_name"]
     schema_name = table_name.split(".")[0]
     sql = f"CREATE SCHEMA IF NOT EXISTS {schema_name};"
@@ -44,23 +64,19 @@ def table_count():
 
 
 @graph
-def week_3_challenge():
+def dbt_graph():
     pass
 
 
 docker = {
     "resources": {
-        "database": {
-            "config": {
-                "host": "postgresql",
-                "user": "postgres_user",
-                "password": "postgres_password",
-                "database": "postgres_db",
-            }
-        },
+        "database": {"config": POSTGRES},
+        "postgres_io": {"config": {"schema_name": "analytics", "table_name": "table"}},
     },
-    "ops": {"create_table": {"config": {"table_name": "analytics.table"}}},
+    "ops": {"create_table": {"config": {"table_name": ANALYTICS_TABLE}}},
 }
 
 
-week_3_challenge_docker = week_3_challenge.to_job()
+dbt_job_docker = dbt_graph.to_job(
+    name="dbt_job_docker",
+)

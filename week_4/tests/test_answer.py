@@ -3,15 +3,12 @@ from unittest.mock import MagicMock
 
 import pytest
 from dagster import AssetKey, build_op_context
+from workspaces.config import REDIS, S3
 from workspaces.project.week_4 import (
     get_s3_data,
-    get_s3_data_docker,
     process_data,
-    process_data_docker,
     put_redis_data,
-    put_redis_data_docker,
     put_s3_data,
-    put_s3_data_docker,
 )
 from workspaces.types import Aggregation, Stock
 
@@ -40,20 +37,8 @@ def stock_list():
 def resource_config():
     return {
         "resources": {
-            "s3": {
-                "config": {
-                    "bucket": "dagster",
-                    "access_key": "test",
-                    "secret_key": "test",
-                    "endpoint_url": "http://localstack:4566",
-                }
-            },
-            "redis": {
-                "config": {
-                    "host": "redis",
-                    "port": 6379,
-                }
-            },
+            "s3": {"config": S3},
+            "redis": {"config": REDIS},
         },
     }
 
@@ -81,7 +66,8 @@ def test_get_s3_data(stock_list):
 
 
 def test_process_data(stocks):
-    assert process_data(stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
+    with build_op_context() as context:
+        assert process_data(context, stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
 
 
 def test_put_redis_data(aggregation):
@@ -98,21 +84,21 @@ def test_put_s3_data(aggregation):
         assert s3_mock.put_data.called
 
 
-def test_get_s3_data_docker():
-    assert get_s3_data_docker.required_resource_keys == {"s3", "io_manager"}
-    assert get_s3_data_docker.group_names_by_key == {AssetKey(["get_s3_data"]): "corise"}
+def test_get_s3_data_asset():
+    assert get_s3_data.required_resource_keys == {"s3", "io_manager"}
+    assert get_s3_data.group_names_by_key == {AssetKey(["get_s3_data"]): "default"}
 
 
-def test_process_data_docker():
-    assert process_data_docker.required_resource_keys == {"io_manager"}
-    assert process_data_docker.group_names_by_key == {AssetKey(["process_data"]): "corise"}
+def test_process_data_asset():
+    assert process_data.required_resource_keys == {"io_manager"}
+    assert process_data.group_names_by_key == {AssetKey(["process_data"]): "default"}
 
 
-def test_put_redis_data_docker():
-    assert put_redis_data_docker.required_resource_keys == {"redis", "io_manager"}
-    assert put_redis_data_docker.group_names_by_key == {AssetKey(["put_redis_data"]): "corise"}
+def test_put_redis_data_asset():
+    assert put_redis_data.required_resource_keys == {"redis", "io_manager"}
+    assert put_redis_data.group_names_by_key == {AssetKey(["put_redis_data"]): "default"}
 
 
-def test_put_s3_data_docker():
-    assert put_s3_data_docker.required_resource_keys == {"s3", "io_manager"}
-    assert put_s3_data_docker.group_names_by_key == {AssetKey(["put_s3_data"]): "corise"}
+def test_put_s3_data_asset():
+    assert put_s3_data.required_resource_keys == {"s3", "io_manager"}
+    assert put_s3_data.group_names_by_key == {AssetKey(["put_s3_data"]): "default"}

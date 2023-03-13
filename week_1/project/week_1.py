@@ -2,7 +2,16 @@ import csv
 from datetime import datetime
 from typing import Iterator, List
 
-from dagster import In, Nothing, Out, String, job, op, usable_as_dagster_type
+from dagster import (
+    In,
+    Nothing,
+    OpExecutionContext,
+    Out,
+    String,
+    job,
+    op,
+    usable_as_dagster_type,
+)
 from pydantic import BaseModel
 
 
@@ -16,7 +25,7 @@ class Stock(BaseModel):
     low: float
 
     @classmethod
-    def from_list(cls, input_list: List[List]):
+    def from_list(cls, input_list: List[str]):
         """Do not worry about this class method for now"""
         return cls(
             date=datetime.strptime(input_list[0], "%Y/%m/%d"),
@@ -42,20 +51,25 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
 
 
 @op
-def get_s3_data():
+def get_s3_data_op():
     pass
 
 
 @op
-def process_data():
+def process_data_op(context: OpExecutionContext, stocks: List[Stock]):
     pass
 
 
 @op
-def put_redis_data():
+def put_redis_data_op(context: OpExecutionContext, aggregation: Aggregation):
+    pass
+
+
+@op
+def put_s3_data_op(context: OpExecutionContext, aggregation: Aggregation):
     pass
 
 
 @job
-def week_1_pipeline():
+def machine_learning_job():
     pass

@@ -1,6 +1,6 @@
 from typing import List
 
-from dagster import DynamicOut, DynamicOutput, String, graph, op
+from dagster import DynamicOut, DynamicOutput, Nothing, String, graph, op
 
 # @op
 # def get_name() -> List[String]:
@@ -35,7 +35,7 @@ def capitalize_name(name: String) -> String:
 
 
 @op
-def hello(context, names: List[String]):
+def hello(context, names: List[String]) -> Nothing:
     for name in names:
         context.log.info(f"Hello, {name}!")
 

@@ -1,7 +1,6 @@
 import csv
 from datetime import datetime
 from heapq import nlargest
-from random import randint
 from typing import Iterator, List
 
 from dagster import (
@@ -10,6 +9,7 @@ from dagster import (
     DynamicOutput,
     In,
     Nothing,
+    OpExecutionContext,
     Out,
     Output,
     String,
@@ -30,7 +30,7 @@ class Stock(BaseModel):
     low: float
 
     @classmethod
-    def from_list(cls, input_list: List[List]):
+    def from_list(cls, input_list: List[str]):
         """Do not worry about this class method for now"""
         return cls(
             date=datetime.strptime(input_list[0], "%Y/%m/%d"),
@@ -56,28 +56,34 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
 
 
 @op
-def get_s3_data():
+def get_s3_data_op():
     pass
 
 
 @op
-def process_data():
+def process_data_op():
     pass
 
 
 @op
-def put_redis_data():
+def put_redis_data_op():
+    pass
+
+
+@op
+def put_s3_data_op():
     pass
 
 
 @op(
     ins={"empty_stocks": In(dagster_type=Any)},
+    out=Out(Nothing),
     description="Notifiy if stock list is empty",
 )
-def empty_stock_notify(context, empty_stocks) -> Nothing:
+def empty_stock_notify_op(context: OpExecutionContext, empty_stocks: Any):
     context.log.info("No stocks returned")
 
 
 @job
-def week_1_challenge():
+def machine_learning_dynamic_job():
     pass

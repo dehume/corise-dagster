@@ -1,15 +1,19 @@
 import datetime
 
 import pytest
-from challenge.week_1_challenge import empty_stock_notify, week_1_challenge
+from challenge.week_1_challenge import (
+    empty_stock_notify_op,
+    machine_learning_dynamic_job,
+)
 from dagster import build_op_context
 from project.week_1 import (
     Aggregation,
     Stock,
-    get_s3_data,
-    process_data,
-    put_redis_data,
-    week_1_pipeline,
+    get_s3_data_op,
+    machine_learning_job,
+    process_data_op,
+    put_redis_data_op,
+    put_s3_data_op,
 )
 
 
@@ -59,7 +63,7 @@ def test_aggregation(aggregation):
 
 def test_get_s3_data(file_path):
     with build_op_context(op_config={"s3_key": file_path}) as context:
-        result = get_s3_data(context)
+        result = get_s3_data_op(context)
         assert result[0] == Stock(
             date=datetime.datetime(2018, 10, 15, 0, 0),
             close=259.5900,
@@ -73,60 +77,63 @@ def test_get_s3_data(file_path):
 @pytest.mark.challenge
 def test_get_s3_data_empty(empty_file_path):
     with build_op_context(op_config={"s3_key": empty_file_path}) as context:
-        get_s3_data(context)
+        get_s3_data_op(context)
 
 
 def test_process_data(stocks):
     with build_op_context() as context:
-        assert process_data(context, stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
-        assert process_data(context, stocks[::-1]) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
+        assert process_data_op(context, stocks) == Aggregation(date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0)
+        assert process_data_op(context, stocks[::-1]) == Aggregation(
+            date=datetime.datetime(2022, 1, 3, 0, 0), high=12.0
+        )
 
 
 def test_put_redis_data(aggregation):
     with build_op_context() as context:
-        put_redis_data(context, aggregation)
+        put_redis_data_op(context, aggregation)
+
+
+def test_put_s3_data(aggregation):
+    with build_op_context() as context:
+        put_s3_data_op(context, aggregation)
 
 
 def test_job(file_path):
-    result = week_1_pipeline.execute_in_process(run_config={"ops": {"get_s3_data": {"config": {"s3_key": file_path}}}})
+    result = machine_learning_job.execute_in_process(
+        run_config={"ops": {"get_s3_data_op": {"config": {"s3_key": file_path}}}}
+    )
     assert result.success
-    # assert result.output_for_node("get_s3_data", "stocks")
-    # assert result.output_for_node("process_data") is not None
-    # assert result.output_for_node("put_redis_data") == {'08_07_2018': None, '08_08_2018': None}
 
 
 @pytest.mark.challenge
 def test_empty_stock_notify():
     with build_op_context() as context:
-        empty_stock_notify(context, aggregation)
+        empty_stock_notify_op(context, aggregation)
 
 
 @pytest.mark.challenge
 def test_job_challenge(file_path):
-    result = week_1_challenge.execute_in_process(
+    result = machine_learning_dynamic_job.execute_in_process(
         run_config={
             "ops": {
-                "get_s3_data": {"config": {"s3_key": file_path}},
-                "process_data": {"config": {"nlargest": 2}},
+                "get_s3_data_op": {"config": {"s3_key": file_path}},
+                "process_data_op": {"config": {"nlargest": 2}},
             }
         }
     )
     assert result.success
-    # assert result.output_for_node("get_s3_data") is not None
-    # assert result.output_for_node("process_data") is not None
-    # assert result.output_for_node("put_redis_data") == {'08_07_2018': None, '08_08_2018': None}
 
 
 @pytest.mark.challenge
 def test_job_challenge_empty(empty_file_path):
-    result = week_1_challenge.execute_in_process(
+    result = machine_learning_dynamic_job.execute_in_process(
         run_config={
             "ops": {
-                "get_s3_data": {"config": {"s3_key": empty_file_path}},
-                "process_data": {"config": {"nlargest": 2}},
+                "get_s3_data_op": {"config": {"s3_key": empty_file_path}},
+                "process_data_op": {"config": {"nlargest": 2}},
             }
         }
     )
     assert result.success
-    assert result.output_for_node("get_s3_data", "empty_stocks") is None
-    assert result.output_for_node("empty_stock_notify") is None
+    assert result.output_for_node("get_s3_data_op", "empty_stocks") is None
+    assert result.output_for_node("empty_stock_notify_op") is None

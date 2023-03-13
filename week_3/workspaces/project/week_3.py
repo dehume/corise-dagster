@@ -1,13 +1,16 @@
+from datetime import datetime
 from typing import List
 
 from dagster import (
     In,
     Nothing,
+    OpExecutionContext,
     Out,
     ResourceDefinition,
     RetryPolicy,
     RunRequest,
     ScheduleDefinition,
+    SensorEvaluationContext,
     SkipReason,
     graph,
     op,
@@ -15,6 +18,7 @@ from dagster import (
     sensor,
     static_partitioned_config,
 )
+from workspaces.config import REDIS, S3
 from workspaces.project.sensors import get_s3_keys
 from workspaces.resources import mock_s3_resource, redis_resource, s3_resource
 from workspaces.types import Aggregation, Stock
@@ -22,31 +26,26 @@ from workspaces.types import Aggregation, Stock
 
 @op
 def get_s3_data():
-    # You can reuse the logic from the previous week
     pass
 
 
 @op
 def process_data():
-    # You can reuse the logic from the previous week
     pass
 
 
 @op
 def put_redis_data():
-    # You can reuse the logic from the previous week
     pass
 
 
 @op
 def put_s3_data():
-    # You can reuse the logic from the previous week
     pass
 
 
 @graph
-def week_3_pipeline():
-    # You can reuse the logic from the previous week
+def machine_learning_graph():
     pass
 
 
@@ -57,20 +56,8 @@ local = {
 
 docker = {
     "resources": {
-        "s3": {
-            "config": {
-                "bucket": "dagster",
-                "access_key": "test",
-                "secret_key": "test",
-                "endpoint_url": "http://localhost:4566",
-            }
-        },
-        "redis": {
-            "config": {
-                "host": "redis",
-                "port": 6379,
-            }
-        },
+        "s3": {"config": S3},
+        "redis": {"config": REDIS},
     },
     "ops": {"get_s3_data": {"config": {"s3_key": "prefix/stock_9.csv"}}},
 }
@@ -80,23 +67,23 @@ def docker_config():
     pass
 
 
-week_3_pipeline_local = week_3_pipeline.to_job(
-    name="week_3_pipeline_local",
+machine_learning_job_local = machine_learning_graph.to_job(
+    name="machine_learning_job_local",
 )
 
-week_3_pipeline_docker = week_3_pipeline.to_job(
-    name="week_3_pipeline_docker",
+machine_learning_job_docker = machine_learning_graph.to_job(
+    name="machine_learning_job_docker",
 )
 
 
-week_3_schedule_local = None
+machine_learning_schedule_local = None
 
 
 @schedule
-def week_3_schedule_docker():
+def machine_learning_schedule_docker():
     pass
 
 
 @sensor
-def week_3_sensor_docker():
+def machine_learning_sensor_docker():
     pass
