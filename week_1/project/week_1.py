@@ -56,17 +56,17 @@ def get_s3_data_op():
 
 
 @op
-def process_data_op(context: OpExecutionContext, stocks: List[Stock]):
+def process_data_op():
     pass
 
 
 @op
-def put_redis_data_op(context: OpExecutionContext, aggregation: Aggregation):
+def put_redis_data_op():
     pass
 
 
 @op
-def put_s3_data_op(context: OpExecutionContext, aggregation: Aggregation):
+def put_s3_data_op():
     pass
 
 
