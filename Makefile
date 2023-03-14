@@ -1,23 +1,23 @@
 # Tests
 .PHONY: week_1_tests
 week_1_tests:
-	@pytest week_1 -vv -m "not challenge"
+	@pytest week_1 -vv -m "not challenge" --disable-warnings
 
 .PHONY: week_1_challenge_tests
 week_1_challenge_tests:
-	@pytest week_1 -vv
+	@pytest week_1 -vv --disable-warnings
 
 .PHONY: week_2_tests
 week_2_tests:
-	@pytest week_2 -vv
+	@pytest week_2 -vv --disable-warnings
 
 .PHONY: week_3_tests
 week_3_tests:
-	@pytest week_3 -vv
+	@pytest week_3 -vv --disable-warnings
 
 .PHONY: week_4_tests
 week_4_tests:
-	@pytest week_4 -vv
+	@pytest week_4 -vv --disable-warnings
 
 
 # Week 2

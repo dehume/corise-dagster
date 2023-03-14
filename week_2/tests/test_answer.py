@@ -5,10 +5,10 @@ import pytest
 from dagster import ResourceDefinition, build_op_context
 from workspaces.project.week_2 import (
     get_s3_data,
+    machine_learning_graph,
     process_data,
     put_redis_data,
     put_s3_data,
-    week_2_pipeline,
 )
 from workspaces.resources import mock_s3_resource
 from workspaces.types import Aggregation, Stock
@@ -75,8 +75,8 @@ def test_put_s3_data(aggregation):
         assert s3_mock.put_data.called
 
 
-def test_week_2_pipeline(stock_list):
-    week_2_pipeline.execute_in_process(
+def test_week_2_job(stock_list):
+    machine_learning_graph.execute_in_process(
         run_config={"ops": {"get_s3_data": {"config": {"s3_key": "data/stock.csv"}}}},
         resources={"s3": mock_s3_resource, "redis": ResourceDefinition.mock_resource()},
     )

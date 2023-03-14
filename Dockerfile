@@ -66,7 +66,7 @@ FROM runner AS daemon
 CMD ["dagster-daemon", "run"]
 
 # ----------------------------------------- #
-#            User Code Repository
+#              Code Locations
 # ----------------------------------------- #
 FROM runner AS content
 ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_content
@@ -74,7 +74,7 @@ ARG COURSE_WEEK
 COPY ${COURSE_WEEK}/workspaces/ ./workspaces
 USER dagster:dagster
 EXPOSE 4000
-CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "workspaces/content/repo.py"]
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4000", "-f", "workspaces/content/deployment.py"]
 
 FROM runner AS project
 ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_project
@@ -82,7 +82,7 @@ ARG COURSE_WEEK
 COPY ${COURSE_WEEK}/workspaces/ ./workspaces
 USER dagster:dagster
 EXPOSE 4001
-CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4001", "-f", "workspaces/project/repo.py"]
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4001", "-f", "workspaces/project/deployment.py"]
 
 FROM runner AS challenge
 ENV DAGSTER_CURRENT_IMAGE=corise-dagster-answer-key_challenge
@@ -90,4 +90,4 @@ ARG COURSE_WEEK
 COPY ${COURSE_WEEK}/workspaces/ ./workspaces
 USER dagster:dagster
 EXPOSE 4002
-CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4002", "-f", "workspaces/challenge/repo.py"]
+CMD ["dagster", "api", "grpc", "-h", "0.0.0.0", "-p", "4002", "-f", "workspaces/challenge/deployment.py"]

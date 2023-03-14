@@ -1,4 +1,4 @@
-from dagster import Out, Output, String, graph, op
+from dagster import Nothing, Out, Output, String, graph, op
 
 
 @op(
@@ -23,7 +23,7 @@ def capitalize_name(name: String) -> String:
 
 
 @op
-def hello(context, name: String):
+def hello(context, name: String) -> Nothing:
     context.log.info(f"Hello, {name}!")
 
 

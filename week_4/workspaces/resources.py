@@ -1,12 +1,13 @@
 import csv
 import json
+from random import randint
 from typing import Iterator
 from unittest.mock import MagicMock
 
 import boto3
 import redis
 import sqlalchemy
-from dagster import Field, Int, String, resource
+from dagster import Field, InitResourceContext, Int, String, resource
 from workspaces.types import Aggregation
 
 
@@ -62,6 +63,9 @@ class Redis:
         self.client = redis.Redis(host=host, port=port)
 
     def put_data(self, name: str, value: str):
+        # Occasional error
+        # if randint(0, 1) == 0:
+        #     raise Exception("Injected occasional error")
         self.client.set(name, value)
 
 
@@ -74,7 +78,7 @@ class Redis:
     },
     description="A resource that can run Postgres",
 )
-def postgres_resource(context) -> Postgres:
+def postgres_resource(context: InitResourceContext) -> Postgres:
     """This resource defines a Postgres client"""
     return Postgres(
         host=context.resource_config["host"],
@@ -85,7 +89,7 @@ def postgres_resource(context) -> Postgres:
 
 
 @resource
-def mock_s3_resource(context):
+def mock_s3_resource(context: InitResourceContext) -> MagicMock:
     stocks = [
         ["2020/09/01", "10.0", "10", "10.0", "10.0", "10.0"],
         ["2020/09/02", "10.0", "10", "10.0", "10.0", "10.0"],
@@ -107,7 +111,7 @@ def mock_s3_resource(context):
     },
     description="A resource that can run S3",
 )
-def s3_resource(context) -> S3:
+def s3_resource(context: InitResourceContext) -> S3:
     """This resource defines a S3 client"""
     return S3(
         bucket=context.resource_config["bucket"],
@@ -124,7 +128,7 @@ def s3_resource(context) -> S3:
     },
     description="A resource that can run Redis",
 )
-def redis_resource(context) -> Redis:
+def redis_resource(context: InitResourceContext) -> Redis:
     """This resource defines a Redis client"""
     return Redis(
         host=context.resource_config["host"],

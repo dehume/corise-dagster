@@ -1,6 +1,15 @@
 from datetime import datetime
 
-from dagster import DagsterType, In, Out, String, graph, op, usable_as_dagster_type
+from dagster import (
+    DagsterType,
+    In,
+    Nothing,
+    Out,
+    String,
+    graph,
+    op,
+    usable_as_dagster_type,
+)
 from pydantic import BaseModel, validator
 
 DagName = DagsterType(
@@ -28,6 +37,7 @@ def get_name():
 
 @op(
     ins={"name": In(dagster_type=DagName, description="Generated dag name")},
+    out=Out(Nothing),
 )
 def hello(context, name):
     context.log.info(f"Hello, {name}!")

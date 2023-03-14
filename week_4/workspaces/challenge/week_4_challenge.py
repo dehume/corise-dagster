@@ -1,8 +1,8 @@
 from random import randint
 
-from dagster import AssetIn, asset
+from dagster import AssetIn, OpExecutionContext, asset
 from dagster_dbt import load_assets_from_dbt_project
-from workspaces.dbt_config import DBT_PROJECT_PATH
+from workspaces.config import DBT_PROJECT_PATH
 
 SOURCE_TABLE = "analytics.dbt_table"
 
@@ -24,7 +24,7 @@ def create_dbt_table(context):
     op_tags={"kind": "postgres"},
     key_prefix=["postgresql"],
 )
-def dbt_table(context, create_dbt_table):
+def dbt_table(context: OpExecutionContext, create_dbt_table):
     sql = f"INSERT INTO {SOURCE_TABLE} (column_1, column_2, column_3) VALUES ('A', 'B', 'C');"
 
     number_of_rows = randint(1, 10)
@@ -36,5 +36,5 @@ def dbt_table(context, create_dbt_table):
 
 
 @asset
-def end(context):
+def end():
     pass
