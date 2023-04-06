@@ -53,7 +53,7 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
 # This config schema will take in one parameter, a string name s3_key. The output of the op is a list of Stock.
 @op(
     config_schema={"s3_key": String},
-    out={"s3_data": Out(dagster_type=List[Stock], description="Get a list off stocks.")},
+    out={"stocks": Out(dagster_type=List[Stock], description="Get a list off stocks.")},
 )
 def get_s3_data_op(context):
     s3_key = context.op_config["s3_key"]
@@ -61,29 +61,38 @@ def get_s3_data_op(context):
     return stocks
 
 
-@op(ins={"s3_data": In(dagster_type=List[Stock], description="")})
-def process_data_op():
+@op(
+    ins={"stocks": In(dagster_type=List[Stock], description="Output of get s3 data.")},
+    out={"aggregation": Out(dagster_type=Aggregation, description="Highest stock.")},
+)
+def process_data_op(context, stocks):
+    high_val = max([s.high for s in stocks])
+    high_stock = list(filter(lambda stock: stock.high >= high_val, stocks))[0]
+    aggregation = Aggregation(date=high_stock.date, high=high_stock.high)
+    return aggregation
+
+
+@op(ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")})
+def put_redis_data_op(context, aggregation) -> Nothing:
     pass
 
 
-@op
-def put_redis_data_op():
-    pass
-
-
-@op
-def put_s3_data_op():
+@op(ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")})
+def put_s3_data_op(context, aggregation) -> Nothing:
+    # should we be writing here or no?
     pass
 
 
 @job
-# @job(config={"ops": {"get_s3_data_op": {"config": {"s3_key": "week_1/data/stock.csv"}}}})
 def machine_learning_job():
-    get_s3_data_op()
+    s3_data = get_s3_data_op()
+    aggregation = process_data_op(s3_data)
+    put_redis_data_op(aggregation)
+    put_s3_data_op(aggregation)
 
 
-# Dagit
-#     ops:
+# Dagit config
+#  ops:
 #   get_s3_data_op:
 #     config:
 #       s3_key: week_1/data/stock.csv
