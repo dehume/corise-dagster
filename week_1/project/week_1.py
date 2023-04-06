@@ -25,7 +25,7 @@ class Stock(BaseModel):
     low: float
 
     @classmethod
-    def from_list(cls, input_list: List[str]):
+    def from_list(cls, input_list: Iterator[str]):
         """Do not worry about this class method for now"""
         return cls(
             date=datetime.strptime(input_list[0], "%Y/%m/%d"),
@@ -50,12 +50,18 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
-@op
-def get_s3_data_op():
-    pass
+# This config schema will take in one parameter, a string name s3_key. The output of the op is a list of Stock.
+@op(
+    config_schema={"s3_key": String},
+    out={"s3_data": Out(dagster_type=List[Stock], description="Get a list off stocks.")},
+)
+def get_s3_data_op(context):
+    s3_key = context.op_config["s3_key"]
+    stocks = list(csv_helper(s3_key))
+    return stocks
 
 
-@op
+@op(ins={"s3_data": In(dagster_type=List[Stock], description="")})
 def process_data_op():
     pass
 
@@ -71,5 +77,13 @@ def put_s3_data_op():
 
 
 @job
+# @job(config={"ops": {"get_s3_data_op": {"config": {"s3_key": "week_1/data/stock.csv"}}}})
 def machine_learning_job():
-    pass
+    get_s3_data_op()
+
+
+# Dagit
+#     ops:
+#   get_s3_data_op:
+#     config:
+#       s3_key: week_1/data/stock.csv
