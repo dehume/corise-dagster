@@ -52,6 +52,8 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
 @op(
     config_schema={"s3_key": String},
     out={"stocks": Out(dagster_type=List[Stock], description="Get a list off stocks.")},
+    tags={"kind": "s3"},
+    description="Get stock data from s3 mock file.",
 )
 def get_s3_data_op(context):
     s3_key = context.op_config["s3_key"]
@@ -62,6 +64,7 @@ def get_s3_data_op(context):
 @op(
     ins={"stocks": In(dagster_type=List[Stock], description="Output of get s3 data.")},
     out={"aggregation": Out(dagster_type=Aggregation, description="Highest stock.")},
+    description="Filter and return highest stock (mock aggregation).",
 )
 def process_data_op(context, stocks):
     high_val = max((s.high for s in stocks))
@@ -70,12 +73,20 @@ def process_data_op(context, stocks):
     return aggregation
 
 
-@op(ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")})
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")},
+    tags={"kind": "redis"},
+    description="Upload aggregation to redis.",
+)
 def put_redis_data_op(context, aggregation) -> Nothing:
     pass
 
 
-@op(ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")})
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")},
+    tags={"kind": "s3"},
+    description="Upload aggregation to s3.",
+)
 def put_s3_data_op(context, aggregation) -> Nothing:
     pass
 
