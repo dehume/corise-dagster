@@ -1,7 +1,6 @@
 import csv
 from datetime import datetime
 from typing import Iterator, List
-
 from dagster import (
     In,
     Nothing,
@@ -50,7 +49,6 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
-# This config schema will take in one parameter, a string name s3_key. The output of the op is a list of Stock.
 @op(
     config_schema={"s3_key": String},
     out={"stocks": Out(dagster_type=List[Stock], description="Get a list off stocks.")},
@@ -66,8 +64,8 @@ def get_s3_data_op(context):
     out={"aggregation": Out(dagster_type=Aggregation, description="Highest stock.")},
 )
 def process_data_op(context, stocks):
-    high_val = max([s.high for s in stocks])
-    high_stock = list(filter(lambda stock: stock.high >= high_val, stocks))[0]
+    high_val = max((s.high for s in stocks))
+    high_stock = list(filter(lambda stock: stock.high == high_val, stocks))[0]
     aggregation = Aggregation(date=high_stock.date, high=high_stock.high)
     return aggregation
 
@@ -79,7 +77,6 @@ def put_redis_data_op(context, aggregation) -> Nothing:
 
 @op(ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")})
 def put_s3_data_op(context, aggregation) -> Nothing:
-    # should we be writing here or no?
     pass
 
 
