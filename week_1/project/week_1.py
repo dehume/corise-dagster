@@ -50,26 +50,39 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
-@op
-def get_s3_data_op():
+@op(config_schema={"s3_key": str}, out=Out())
+def get_s3_data_op(context) -> List[Stock]:
+    #pull s3_key from op config
+    s3_key = context.op_config["s3_key"]
+    
+    #read data from csv to simulate s3
+    stock_list = []
+    for stock in csv_helper(s3_key):
+        stock_list.append(stock)
+    return stock_list
+
+
+@op(ins={"stock_data": In(dagster_type=List[Stock])}, out=Out(dagster_type=Aggregation))
+def process_data_op(context, stock_data) -> Aggregation:
+    #find the max high stock value
+    max_stock = max(stock_data, key=lambda stock: stock.high)
+    #return the list of aggregation
+    return Aggregation(date=max_stock.date, high=max_stock.high)
+
+
+@op(ins={"aggr": In(dagster_type=Aggregation)}, out=Out())
+def put_redis_data_op(context, aggr: Aggregation):
     pass
 
 
-@op
-def process_data_op():
-    pass
-
-
-@op
-def put_redis_data_op():
-    pass
-
-
-@op
-def put_s3_data_op():
+@op(ins={"aggr": In(dagster_type=Aggregation)}, out=Out())
+def put_s3_data_op(context, aggr: Aggregation):
     pass
 
 
 @job
 def machine_learning_job():
-    pass
+    stock_data = get_s3_data_op()
+    max_high = process_data_op(stock_data)
+    put_redis_data_op(max_high)
+    put_s3_data_op(max_high)
