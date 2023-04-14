@@ -89,8 +89,8 @@ services:
       POSTGRES_PASSWORD: "postgres_password"
     profiles:
       - dagster
-    volumes:
-      - ./${COURSE_WEEK}/postgres-dagster:/var/lib/postgresql/data
+    # volumes:
+    #   - ./${COURSE_WEEK}/postgres-dagster:/var/lib/postgresql/data
     networks:
       - dagster_network
 
@@ -104,7 +104,7 @@ services:
       - dagster_network
 
   localstack:
-    image: localstack/localstack
+    image: localstack/localstack:1.4.0
     container_name: localstack
     ports:
       - "4566:4566"
@@ -155,5 +155,5 @@ networks:
     driver: bridge
     name: dagster_network
 
-volumes:
-  postgresql:
+# volumes:
+#   postgresql:
