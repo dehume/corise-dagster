@@ -30,7 +30,6 @@ def get_s3_data(context: OpExecutionContext):
     return stock_list
 
 
-
 @op(
     ins={"stocks": In(dagster_type=List, description="List of stocks to be processed")},
     out={"agg": Out(dagster_type=Aggregation, description="Stock with the max high and its date")}
@@ -76,7 +75,6 @@ def machine_learning_graph():
     max_stock_info = process_data(stock_data)
     put_redis_data(max_stock_info)
     put_s3_data(max_stock_info)
-    pass 
 
 local = {
     "ops": {"get_s3_data": {"config": {"s3_key": S3_FILE}}},
