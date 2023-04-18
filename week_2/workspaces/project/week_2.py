@@ -19,15 +19,10 @@ from workspaces.types import Aggregation, Stock
 @op(required_resource_keys={"s3"},
     config_schema={"s3_key": String},
     description="Meant to read stock data from the S3 client")
-# @solid(input_defs=[InputDefinition("s3_keys", List[String])])
 def get_s3_data(context) -> List[Stock]:
     s3_key = context.op_config['s3_key']
     """s3 being the instance of the s3 resource defined in resources.py on which we call the get_data method of the class"""
-    # s3 = context.resources
-    # stocks = []
     stocks = [Stock.from_list(stock) for stock in context.resources.s3.get_data(s3_key)]
-    # for stock in context.resources.s3.get_data(s3_key):
-    #     stocks.append(stock)
     return stocks 
 
 
