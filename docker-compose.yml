@@ -12,7 +12,6 @@ x-app-vars:
   DAGSTER_POSTGRES_DB: "postgres_db"
   DAGSTER_POSTGRES_USER: "postgres_user"
   DAGSTER_POSTGRES_PASSWORD: "postgres_password"
-  DAGSTER_HOME: "/opt/dagster/dagster_home/dbt_test_project"
 
 x-ucr-service:
   &default-ucr-service
