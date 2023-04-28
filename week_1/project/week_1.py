@@ -50,26 +50,32 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
-@op
-def get_s3_data_op():
+@op(description="Read stock data from s3 and return them as a list-mimicking reading from data lake", config_schema={"s3_key": String})
+def get_s3_data_op(context) -> List[Stock]:
+    s3_key = context.op_config['s3_key']
+    stocks = list(csv_helper(s3_key))
+    return stocks 
+
+
+@op(description="Digest the list og stock data and return an aggregation of the stock with the mac high value")
+def process_data_op(context, stocks: List[Stock]) -> Aggregation:
+    max_high_value_stock = max(stocks, key=lambda s: s.high)
+    aggregation = Aggregation(date=max_high_value_stock.date, high=max_high_value_stock.high)
+    return aggregation
+
+
+@op(description="Meant to upload/write the processed data from aggregation to Redis")
+def put_redis_data_op(context, aggregation: Aggregation):
     pass
 
 
-@op
-def process_data_op():
+@op(description="Meant to upload/write the processed data from aggregation to S3")
+def put_s3_data_op(context, aggregation: Aggregation):
     pass
-
-
-@op
-def put_redis_data_op():
-    pass
-
-
-@op
-def put_s3_data_op():
-    pass
-
 
 @job
 def machine_learning_job():
-    pass
+    stocks = get_s3_data_op()
+    aggregation = process_data_op(stocks)
+    put_redis_data_op(aggregation)
+    put_s3_data_op(aggregation)
