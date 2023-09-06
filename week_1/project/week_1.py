@@ -1,7 +1,6 @@
 import csv
 from datetime import datetime
 from typing import Iterator, List
-
 from dagster import (
     In,
     Nothing,
@@ -25,7 +24,7 @@ class Stock(BaseModel):
     low: float
 
     @classmethod
-    def from_list(cls, input_list: List[str]):
+    def from_list(cls, input_list: Iterator[str]):
         """Do not worry about this class method for now"""
         return cls(
             date=datetime.strptime(input_list[0], "%Y/%m/%d"),
@@ -50,26 +49,58 @@ def csv_helper(file_name: str) -> Iterator[Stock]:
             yield Stock.from_list(row)
 
 
-@op
-def get_s3_data_op():
+@op(
+    config_schema={"s3_key": String},
+    out={"stocks": Out(dagster_type=List[Stock], description="Get a list off stocks.")},
+    tags={"kind": "s3"},
+    description="Get stock data from s3 mock file.",
+)
+def get_s3_data_op(context):
+    s3_key = context.op_config["s3_key"]
+    stocks = list(csv_helper(s3_key))
+    return stocks
+
+
+@op(
+    ins={"stocks": In(dagster_type=List[Stock], description="Output of get s3 data.")},
+    out={"aggregation": Out(dagster_type=Aggregation, description="Highest stock.")},
+    description="Filter and return highest stock (mock aggregation).",
+)
+def process_data_op(context, stocks):
+    high_val = max((s.high for s in stocks))
+    high_stock = list(filter(lambda stock: stock.high == high_val, stocks))[0]
+    aggregation = Aggregation(date=high_stock.date, high=high_stock.high)
+    return aggregation
+
+
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")},
+    tags={"kind": "redis"},
+    description="Upload aggregation to redis.",
+)
+def put_redis_data_op(context, aggregation) -> Nothing:
     pass
 
 
-@op
-def process_data_op():
-    pass
-
-
-@op
-def put_redis_data_op():
-    pass
-
-
-@op
-def put_s3_data_op():
+@op(
+    ins={"aggregation": In(dagster_type=Aggregation, description="Output of process data.")},
+    tags={"kind": "s3"},
+    description="Upload aggregation to s3.",
+)
+def put_s3_data_op(context, aggregation) -> Nothing:
     pass
 
 
 @job
 def machine_learning_job():
-    pass
+    s3_data = get_s3_data_op()
+    aggregation = process_data_op(s3_data)
+    put_redis_data_op(aggregation)
+    put_s3_data_op(aggregation)
+
+
+# Dagit config
+#  ops:
+#   get_s3_data_op:
+#     config:
+#       s3_key: week_1/data/stock.csv
